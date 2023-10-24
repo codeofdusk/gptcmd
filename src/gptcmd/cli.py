@@ -132,10 +132,15 @@ class Gptcmd(cmd.Cmd):
     def _complete_from_key(d: Dict, text: str) -> List[str]:
         return [k for k, v in d.items() if k.startswith(text)]
 
-    @staticmethod
-    def _complete_role(text: str) -> List[str]:
-        ROLES = ("user", "assistant", "system")
-        return [role for role in ROLES if role.startswith(text)]
+    KNOWN_ROLES = ("user", "assistant", "system")
+
+    @classmethod
+    def _complete_role(cls, text: str) -> List[str]:
+        return [role for role in cls.ROLES if role.startswith(text)]
+
+    @classmethod
+    def _validate_role(cls, role: str) -> bool:
+        return role in cls.KNOWN_ROLES
 
     def emptyline(self):
         "Disable Python cmd's repeat last command behaviour."
@@ -633,7 +638,7 @@ class Gptcmd(cmd.Cmd):
         """
         m = re.match(
             (
-                r"^(user|assistant|system)\s+"
+                f"^({'|'.join(self.__class__.KNOWN_ROLES)})\s+"
                 r"((?:-?\d+|\.)(?:\s+-?\d+|\s*\.)*)"
                 r"(?:\s+([a-zA-Z0-9_-]{1,64}))?$"
             ),
@@ -641,7 +646,8 @@ class Gptcmd(cmd.Cmd):
         )
         if not m:
             print(
-                "Usage: rename <user|assistant|system> <message range> [name]"
+                f"Usage: rename <{'|'.join(self.__class__.KNOWN_ROLES)}>"
+                " <message range> [name]"
             )
             return
         role, ref, name = m.groups()
@@ -775,10 +781,17 @@ class Gptcmd(cmd.Cmd):
         """
         args = arg.split()
         if len(args) < 2:
-            print("Usage: read <path> <user|assistant|system>")
+            print(
+                "Usage: read <path> <{'|'.join(self.__class__.KNOWN_ROLES)}>"
+            )
             return
         path = " ".join(args[:-1])
         role = args[-1]
+        if not self.__class__._validate_role(role):
+            print(
+                f"Usage: read <path> <{'|'.join(self.__class__.KNOWN_ROLES)}>"
+            )
+            return
         try:
             with open(path, encoding="utf-8", errors="ignore") as fin:
                 self._current_thread.append(
