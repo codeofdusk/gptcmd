@@ -780,18 +780,13 @@ class Gptcmd(cmd.Cmd):
         example: "read /path/to/prompt.txt system"
         """
         args = arg.split()
-        if len(args) < 2:
-            print(
-                "Usage: read <path> <{'|'.join(self.__class__.KNOWN_ROLES)}>"
-            )
-            return
-        path = " ".join(args[:-1])
-        role = args[-1]
-        if not self.__class__._validate_role(role):
+        if len(args) < 2 or not self.__class__._validate_role(args[-1]):
             print(
                 f"Usage: read <path> <{'|'.join(self.__class__.KNOWN_ROLES)}>"
             )
             return
+        path = " ".join(args[:-1])
+        role = args[-1]
         try:
             with open(path, encoding="utf-8", errors="ignore") as fin:
                 self._current_thread.append(
