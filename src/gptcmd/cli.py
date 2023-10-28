@@ -638,7 +638,7 @@ class Gptcmd(cmd.Cmd):
         """
         m = re.match(
             (
-                f"^({'|'.join(self.__class__.KNOWN_ROLES)})\s+"
+                f"^({'|'.join(self.__class__.KNOWN_ROLES)})\\s+"
                 r"((?:-?\d+|\.)(?:\s+-?\d+|\s*\.)*)"
                 r"(?:\s+([a-zA-Z0-9_-]{1,64}))?$"
             ),
