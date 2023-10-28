@@ -4,7 +4,9 @@ Gptcmd allows you to interact with OpenAI's chat-based models (`gpt-3.5-turbo` a
 ## Getting started
 Gptcmd requires [Python](https://python.org) 3.7.1 or later. It is available on PyPI, and can, for instance, be installed with `pip install gptcmd` at a command line shell. Running `gptcmd` at a shell starts the application. If Python's `bin` or `scripts` directory isn't on your path, you may need to launch the application with a command like `~/.local/bin/gptcmd` (depending on your system configuration). In most cases though, `gptcmd` should "just work".
 
-Gptcmd searches for an OpenAI API key in the `OPENAI_API_KEY` environment variable. If no key was found, Gptcmd will ask for it at launch. If you don't have an API key, you'll need to create an OpenAI account if you don't have one, then [generate a key](https://beta.openai.com/account/api-keys).
+If you don't have an OpenAI account, you'll need to create one and [add your credit card](https://platform.openai.com/account/billing/overview). To manage costs, you can [set a monthly hard limit](https://platform.openai.com/account/billing/limits) ($5 or so goes very far, especially on `gpt-3.5-turbo`).
+
+Gptcmd searches for an OpenAI API key in the `OPENAI_API_KEY` environment variable. If no key was found, Gptcmd will ask for it at launch. If you don't have an API key, you'll need to [generate a key](https://beta.openai.com/account/api-keys).
 
 Once Gptcmd starts, it presents a prompt containing the name of the currently active model and waits for user input. Running the `quit` command (typing `quit` at the prompt and pressing <kbd>Return</kbd>) exits the program.
 
