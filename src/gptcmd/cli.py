@@ -83,7 +83,8 @@ class Gptcmd(cmd.Cmd):
         are replaced with the message fragment.
         """
         PLACEHOLDER = "..."
-        width = 79 - len(tpl.format(msg=""))
+        MAX_LENGTH = 79
+        width = MAX_LENGTH - len(tpl.format(msg=""))
         content = msg.content
         res = shorten(content, width=width, placeholder=PLACEHOLDER)
         if res == PLACEHOLDER:
