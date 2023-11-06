@@ -333,14 +333,14 @@ Generative AI systems such as StyleGAN computer programs essentially morph multi
 ```
 (rest of output omitted)
 
-Another useful parameter is `request_timeout` which controls how long (in seconds) Gptcmd waits for a response from GPT:
+Another useful parameter is `timeout` which controls how long (in seconds) Gptcmd waits for a response from GPT:
 
 ```
-(gpt-3.5-turbo) set request_timeout 0.5
+(gpt-3.5-turbo) set timeout 0.5
 OK
 (gpt-3.5-turbo) say Hello!
 ...
-Request timed out: HTTPSConnectionPool(host='api.openai.com', port=443): Read timed out. (read timeout=0.5)
+Request timed out.
 ```
 
 The `set` command with no arguments shows all set API parameters:
@@ -348,7 +348,7 @@ The `set` command with no arguments shows all set API parameters:
 ```
 (gpt-3.5-turbo) set
 temperature: 2
-request_timeout: 0.5
+timeout: 0.5
 ```
 
 The `unset` command, with an argument, reverts the specified API parameter to its default value. With no argument, it restores all API parameters to default.

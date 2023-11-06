@@ -53,7 +53,11 @@ class _stream:
         self.message = Message(content="", role="")
 
     def _handle_chunk(self, chunk) -> Dict[str, Any]:
-        delta = chunk.choices[0].get("delta", {})
+        delta = {
+            k: v
+            for k, v in chunk.choices[0].delta.model_dump().items()
+            if v is not None
+        }
         for k, v in delta.items():
             if hasattr(self.message, k):
                 setattr(self.message, k, getattr(self.message, k) + v)
@@ -144,8 +148,9 @@ class MessageThread(Sequence):
                 except APIParameterError:
                     continue
         self.stream: bool = False
+        self._openai = openai.OpenAI()
         if model is None:
-            models = openai.Model.list()["data"]
+            models = self._openai.models.list().data
             if MessageThread._is_valid_model("gpt-4", models=models):
                 self.model = "gpt-4"
             elif MessageThread._is_valid_model("gpt-3.5-turbo", models=models):
@@ -178,11 +183,11 @@ class MessageThread(Sequence):
     @staticmethod
     def _is_valid_model(
         model: str,
-        models: Optional[List[openai.api_resources.model.Model]] = None,
+        models: Optional[List[openai.types.model.Model]] = None,
     ) -> bool:
         if models is None:
-            models = openai.Model.list()["data"]
-        return model in {m["id"] for m in models}
+            models = self._openai.models.list().data
+        return model in {m.id for m in models}
 
     def __repr__(self) -> str:
         return f"<{self.name} MessageThread {self._messages!r}>"
@@ -294,7 +299,7 @@ class MessageThread(Sequence):
     def _get_openai_kwargs(self) -> Dict[str, Any]:
         """
         Returns the literal keyword arguments passed to
-        openai.ChatCompletion.create or openai.ChatCompletion.acreate.
+        OpenAI.chat.completions.create.
         """
         return {
             "model": self.model,
@@ -321,7 +326,9 @@ class MessageThread(Sequence):
         to this thread.
         """
         self._pre_send()
-        resp = openai.ChatCompletion.create(**self._get_openai_kwargs())
+        resp = self._openai.chat.completions.create(
+            **self._get_openai_kwargs()
+        )
         return self._post_send(resp, MessageStream)
 
     async def asend(self) -> Union[Message, AioMessageStream]:
@@ -331,7 +338,9 @@ class MessageThread(Sequence):
         be awaited.
         """
         self._pre_send()
-        resp = await openai.ChatCompletion.acreate(**self._get_openai_kwargs())
+        resp = await self._openai.chat.completions.acreate(
+            **self._get_openai_kwargs()
+        )
         return self._post_send(resp, AioMessageStream)
 
     S = TypeVar("S", bound=_stream)
@@ -346,14 +355,14 @@ class MessageThread(Sequence):
                 self.prompt_tokens = None
                 self.sampled_tokens = None
             if self.prompt_tokens is not None:
-                self.prompt_tokens += resp.usage["prompt_tokens"]
+                self.prompt_tokens += resp.usage.prompt_tokens
             if self.sampled_tokens is not None:
-                self.sampled_tokens += resp.usage["completion_tokens"]
+                self.sampled_tokens += resp.usage.completion_tokens
             res = None
             for choice in resp.choices:
                 msg = Message(
-                    content=choice.message["content"],
-                    role=choice.message["role"],
+                    content=choice.message.content,
+                    role=choice.message.role,
                 )
                 self.append(msg)
                 if res is None:

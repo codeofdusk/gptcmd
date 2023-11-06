@@ -293,7 +293,7 @@ class Gptcmd(cmd.Cmd):
             res = self._current_thread.send()
         except KeyboardInterrupt:
             return
-        except (NotImplementedError, openai.error.OpenAIError) as e:
+        except (NotImplementedError, openai.OpenAIError) as e:
             print(str(e))
             return
         if isinstance(res, Message):
@@ -874,12 +874,6 @@ def main():
     if args.version:
         print(f"Gptcmd {__version__}")
         return
-    if not openai.api_key:
-        try:
-            openai.api_key = input("Enter your OpenAI API key:")
-        except KeyboardInterrupt:
-            return
-        print("API key set for this session.")
     shell = Gptcmd()
     if args.path:
         shell.do_load(args.path, _print_on_success=False)
