@@ -491,7 +491,7 @@ class Gptcmd(cmd.Cmd):
         """
         if not arg:
             print(f"Current model: {self._current_thread.model}")
-        elif MessageThread._is_valid_model(arg):
+        elif self._current_thread._is_valid_model(arg):
             self._current_thread.model = arg
             print("OK")
         else:

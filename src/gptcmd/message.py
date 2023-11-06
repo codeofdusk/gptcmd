@@ -151,9 +151,9 @@ class MessageThread(Sequence):
         self._openai = openai.OpenAI()
         if model is None:
             models = self._openai.models.list().data
-            if MessageThread._is_valid_model("gpt-4", models=models):
+            if self._is_valid_model("gpt-4", models=models):
                 self.model = "gpt-4"
-            elif MessageThread._is_valid_model("gpt-3.5-turbo", models=models):
+            elif self._is_valid_model("gpt-3.5-turbo", models=models):
                 self.model = "gpt-3.5-turbo"
             else:
                 raise RuntimeError("No known GPT model available!")
@@ -180,8 +180,8 @@ class MessageThread(Sequence):
         )
         return res
 
-    @staticmethod
     def _is_valid_model(
+        self,
         model: str,
         models: Optional[List[openai.types.model.Model]] = None,
     ) -> bool:
