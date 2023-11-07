@@ -151,6 +151,9 @@ class MessageThread(Sequence):
                     continue
         self.stream: bool = False
         self._openai = openai.OpenAI()
+        self._async_openai: Optional[openai.AsyncOpenAI] = (
+            None  # Lazily create as not used in the CLI
+        )
         if model is None:
             models = self._openai.models.list().data
             if self._is_valid_model("gpt-4", models=models):
@@ -347,8 +350,10 @@ class MessageThread(Sequence):
         append the result to this thread. Note that this method must
         be awaited.
         """
+        if self._async_openai is None:
+            self._async_openai = openai.AsyncOpenAI()
         self._pre_send()
-        resp = await self._openai.chat.completions.acreate(
+        resp = await self._openai.chat.completions.create(
             **self._get_openai_kwargs()
         )
         return self._post_send(resp, AioMessageStream)
