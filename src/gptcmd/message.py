@@ -283,7 +283,14 @@ class MessageThread(Sequence):
     def set_api_param(self, key: str, val: Any) -> None:
         "Set an OpenAI API parameter to send with future messages"
         SPECIAL_OPTS = frozenset(("model", "messages", "stream"))
-        opts = frozenset(inspect.signature(self._openai.chat.completions.create).parameters.keys()) - SPECIAL_OPTS
+        opts = (
+            frozenset(
+                inspect.signature(
+                    self._openai.chat.completions.create
+                ).parameters.keys()
+            )
+            - SPECIAL_OPTS
+        )
         if key not in opts:
             raise APIParameterError(f"Invalid API parameter {key}")
         self._api_params[key] = val
