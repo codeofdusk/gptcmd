@@ -1,8 +1,11 @@
+import base64
 import dataclasses
 import inspect
+import mimetypes
 
 import openai
 
+from abc import ABC, abstractmethod
 from collections.abc import Sequence
 from typing import (
     Any,
@@ -27,6 +30,66 @@ file, You can obtain one at https://mozilla.org/MPL/2.0/.
 """
 
 
+class MessageAttachment(ABC):
+    """
+    A non-text component that can be associated with a Message, such as an
+    image for vision models.
+    """
+
+    _type_registry = {}
+
+    @classmethod
+    def register_openai_type(cls, openai_type: str):
+        def decorator(subclass):
+            cls._type_registry[openai_type] = subclass
+            return subclass
+
+        return decorator
+
+    @classmethod
+    def from_dict(cls, d: Dict[str, Any]):
+        """
+        Instantiate a MessageAttachment from a dict in the format returned by
+        MessageAttachment.to_dict()
+        """
+        openai_type = d.get("type")
+        if openai_type in cls._type_registry:
+            return cls._type_registry[openai_type].from_dict(d)
+        else:
+            raise ValueError(f"Unrecognized type: {openai_type}")
+
+    @abstractmethod
+    def to_openai(self) -> Dict[str, Any]:
+        raise NotImplementedError
+
+    def to_dict(self) -> Dict[str, Any]:
+        "Exports this attachment as a serializable dict"
+        return self.to_openai()
+
+
+@MessageAttachment.register_openai_type("image_url")
+class Image(MessageAttachment):
+    "An image reachable by URL that can be fetched by the OpenAI API."
+
+    def __init__(self, url: str):
+        self.url = url
+
+    @classmethod
+    def from_path(cls, path: str):
+        "Instantiate an Image from a file"
+        with open(path, "rb") as fin:
+            b64data = base64.b64encode(fin.read()).decode("utf-8")
+        mimetype = mimetypes.guess_type(path)[0]
+        return cls(url=f"data:{mimetype};base64,{b64data}")
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]):
+        return cls(url=data.get("image_url"))
+
+    def to_openai(self) -> Dict[str, Any]:
+        return {"type": "image_url", "image_url": self.url}
+
+
 @dataclasses.dataclass
 class Message:
     """A message sent to or received from OpenAI."""
@@ -41,6 +104,47 @@ class Message:
     #: Whether this message is "sticky" (not affected by thread-level deletion
     #: operations)
     _sticky: bool = False
+    #: A collection of attached objects, such as images
+    _attachments: Iterable[MessageAttachment] = dataclasses.field(
+        default_factory=list
+    )
+
+    @classmethod
+    def from_dict(cls, d: Dict[str, Any]):
+        """
+        Instantiate a Message from a dict in the format returned by
+        Message.to_dict()
+        """
+        valid_keys = [f.name for f in dataclasses.fields(cls)]
+        kwargs = {}
+        for k, v in d.items():
+            if k == "_attachments":
+                kwargs[k] = [MessageAttachment.from_dict(i) for i in v]
+            elif k in valid_keys:
+                kwargs[k] = v
+        return cls(**kwargs)
+
+    def to_openai(self):
+        res = dataclasses.asdict(
+            self,
+            dict_factory=lambda x: {
+                k: v
+                for k, v in x
+                if not (k.startswith("_") or (k == "name" and v is None))
+            },
+        )
+        if self._attachments:
+            res["content"] = [
+                {"type": "text", "text": self.content},
+                *[a.to_openai() for a in self._attachments],
+            ]
+        return res
+
+    def to_dict(self) -> Dict[str, Any]:
+        "Exports this message as a serializable dict"
+        res = {f.name: getattr(self, f.name) for f in dataclasses.fields(self)}
+        res["_attachments"] = [a.to_dict() for a in self._attachments]
+        return res
 
 
 class _stream:
@@ -174,7 +278,7 @@ class MessageThread(Sequence):
         Instantiate a MessageThread from a dict in the format returned by
         MessageThread.to_dict()
         """
-        messages = [Message(**m) for m in d.get("messages", [])]
+        messages = [Message.from_dict(m) for m in d.get("messages", [])]
         api_params = d.get("api_params")
         names = d.get("names")
         res = cls(
@@ -252,7 +356,7 @@ class MessageThread(Sequence):
     def to_dict(self) -> Dict[str, Any]:
         "Exports this thread to a serializable dict."
         return {
-            "messages": [dataclasses.asdict(m) for m in self._messages],
+            "messages": [m.to_dict() for m in self._messages],
             "names": self.names.copy(),
             "api_params": self.api_params,
         }
@@ -324,19 +428,7 @@ class MessageThread(Sequence):
         """
         return {
             "model": self.model,
-            "messages": [
-                dataclasses.asdict(
-                    m,
-                    dict_factory=lambda x: {
-                        k: v
-                        for k, v in x
-                        if not (
-                            k.startswith("_") or (k == "name" and v is None)
-                        )
-                    },
-                )
-                for m in self._messages
-            ],
+            "messages": [m.to_openai() for m in self._messages],
             "stream": self.stream,
             **self._api_params,
         }
