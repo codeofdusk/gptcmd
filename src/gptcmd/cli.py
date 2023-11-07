@@ -137,7 +137,7 @@ class Gptcmd(cmd.Cmd):
 
     @classmethod
     def _complete_role(cls, text: str) -> List[str]:
-        return [role for role in cls.ROLES if role.startswith(text)]
+        return [role for role in cls.KNOWN_ROLES if role.startswith(text)]
 
     @classmethod
     def _validate_role(cls, role: str) -> bool:
