@@ -35,7 +35,7 @@ file, You can obtain one at https://mozilla.org/MPL/2.0/.
 """
 
 
-__version__ = "1.0.3"
+__version__ = "1.1.0"
 
 
 def input_with_handling(_input: Callable) -> Callable:
