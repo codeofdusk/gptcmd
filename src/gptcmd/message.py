@@ -141,7 +141,7 @@ class MessageThread(Sequence):
         self.prompt_tokens: Optional[int] = 0
         self.sampled_tokens: Optional[int] = 0
         self._api_params: Dict[str, Any] = (
-            MessageThread.DEFAULT_API_PARAMS.copy()
+            self.__class__.DEFAULT_API_PARAMS.copy()
         )
         if api_params is not None:
             for key, val in api_params.items():
@@ -210,8 +210,8 @@ class MessageThread(Sequence):
             k: v
             for k, v in self._api_params.items()
             if not (
-                k in MessageThread.DEFAULT_API_PARAMS
-                and self._api_params[k] == MessageThread.DEFAULT_API_PARAMS[k]
+                k in self.__class__.DEFAULT_API_PARAMS
+                and self._api_params[k] == self.__class__.DEFAULT_API_PARAMS[k]
             )
         }
 

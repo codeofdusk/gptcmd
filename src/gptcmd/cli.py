@@ -58,9 +58,10 @@ class Gptcmd(cmd.Cmd):
         f"Welcome to Gptcmd {__version__}! Type help or ? to list commands.\n"
     )
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, thread_cls=MessageThread, *args, **kwargs):
+        self.thread_cls = thread_cls
         self.last_path = None
-        self._detached = MessageThread("*detached*")
+        self._detached = self.thread_cls("*detached*")
         self._current_thread = self._detached
         self._threads = {}
         super().__init__(*args, **kwargs)
@@ -170,7 +171,7 @@ class Gptcmd(cmd.Cmd):
             return
         if arg not in self._threads:
             targetstr = "new thread"
-            self._threads[arg] = MessageThread(
+            self._threads[arg] = self.thread_cls(
                 name=arg,
                 model=self._current_thread.model,
                 messages=self._current_thread.messages,
@@ -549,14 +550,14 @@ class Gptcmd(cmd.Cmd):
         """
         if not arg:
             self._current_thread._api_params = (
-                MessageThread.DEFAULT_API_PARAMS.copy()
+                self.thread_cls.DEFAULT_API_PARAMS.copy()
             )
             print("Unset all parameters")
         elif arg not in self._current_thread._api_params:
             print(f"{arg} not set")
-        elif arg in MessageThread.DEFAULT_API_PARAMS:
+        elif arg in self.thread_cls.DEFAULT_API_PARAMS:
             self._current_thread.set_api_param(
-                arg, MessageThread.DEFAULT_API_PARAMS[arg]
+                arg, self.thread_cls.DEFAULT_API_PARAMS[arg]
             )
             print("Unset")
         else:
@@ -757,7 +758,7 @@ class Gptcmd(cmd.Cmd):
             return
         self._threads.update(
             {
-                k: MessageThread.from_dict(
+                k: self.thread_cls.from_dict(
                     v, name=k, model=self._current_thread.model
                 )
                 for k, v in d["threads"].items()
