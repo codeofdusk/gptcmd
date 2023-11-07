@@ -33,11 +33,9 @@ class TestMessageThread(unittest.TestCase):
         )
         self.assertEqual(
             self.thread.render(),
-            (
-                "user: What is a cactus?\nassistant: A desert plant with"
-                " thick, fleshy stems, sharp spines, and beautiful,"
-                " short-lived flowers."
-            ),
+            "user: What is a cactus?\nassistant: A desert plant with"
+            " thick, fleshy stems, sharp spines, and beautiful,"
+            " short-lived flowers.",
         )
 
     def test_render_custom_names(self):
@@ -54,11 +52,9 @@ class TestMessageThread(unittest.TestCase):
         )
         self.assertEqual(
             self.thread.render(),
-            (
-                "Bill: What is a cactus?\nKevin: A desert plant with thick,"
-                " fleshy stems, sharp spines, and beautiful, short-lived"
-                " flowers."
-            ),
+            "Bill: What is a cactus?\nKevin: A desert plant with thick,"
+            " fleshy stems, sharp spines, and beautiful, short-lived"
+            " flowers.",
         )
 
     def test_set_api_param(self):
