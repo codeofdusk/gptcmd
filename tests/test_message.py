@@ -72,6 +72,11 @@ class TestMessageThread(unittest.TestCase):
             )
         self.assertNotIn("messages", self.thread._api_params)
 
+    def test_set_api_param_invalid(self):
+        with self.assertRaises(APIParameterError):
+            self.thread.set_api_param("frequency_pen", 1.5)
+        self.assertNotIn("frequency_pen", self.thread._api_params)
+
     def test_pop(self):
         self.thread.append(Message(content="Hello", role="user"))
         self.thread.append(Message(content="Hi", role="assistant"))
