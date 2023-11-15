@@ -129,7 +129,10 @@ class MessageThread(Sequence):
             names: Mapping of OpenAI roles to names that should be set on
                 future messages added to this thread
         """
-
+        self._openai = openai.OpenAI()
+        self._async_openai: Optional[openai.AsyncOpenAI] = (
+            None  # Lazily create as not used in the CLI
+        )
         self.name: str = name
         self._messages: List[Message] = (
             [dataclasses.replace(m) for m in messages]
@@ -150,10 +153,6 @@ class MessageThread(Sequence):
                 except APIParameterError:
                     continue
         self.stream: bool = False
-        self._openai = openai.OpenAI()
-        self._async_openai: Optional[openai.AsyncOpenAI] = (
-            None  # Lazily create as not used in the CLI
-        )
         if model is None:
             models = self._openai.models.list().data
             if self._is_valid_model("gpt-4", models=models):
