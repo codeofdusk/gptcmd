@@ -10,6 +10,14 @@ file, You can obtain one at https://mozilla.org/MPL/2.0/.
 """
 
 
+class TestMessageThreadInit(unittest.TestCase):
+    def test_init_api_not_dirty(self):
+        self.thread = MessageThread(
+            name="test", api_params={"temperature": 0.3}
+        )
+        self.assertEqual(self.thread.dirty, False)
+
+
 class TestMessageThread(unittest.TestCase):
     def setUp(self):
         self.thread = MessageThread(name="test")
