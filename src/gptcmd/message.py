@@ -71,23 +71,32 @@ class MessageAttachment(ABC):
 class Image(MessageAttachment):
     "An image reachable by URL that can be fetched by the OpenAI API."
 
-    def __init__(self, url: str):
+    def __init__(self, url: str, detail: Optional[str] = None):
         self.url = url
+        self.detail = detail
 
     @classmethod
-    def from_path(cls, path: str):
+    def from_path(cls, path: str, *args, **kwargs):
         "Instantiate an Image from a file"
         with open(path, "rb") as fin:
             b64data = base64.b64encode(fin.read()).decode("utf-8")
         mimetype = mimetypes.guess_type(path)[0]
-        return cls(url=f"data:{mimetype};base64,{b64data}")
+        return cls(url=f"data:{mimetype};base64,{b64data}", *args, **kwargs)
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]):
-        return cls(url=data.get("image_url"))
+    def from_dict(cls, d: Dict[str, Any]):
+        return cls(url=d.get("url"), detail=d.get("detail"))
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {"type": "image_url", "url": self.url, "detail": self.detail}
 
     def to_openai(self) -> Dict[str, Any]:
-        return {"type": "image_url", "image_url": self.url}
+        res = {"type": "image_url"}
+        if self.detail is not None:
+            res["image_url"] = {"url": self.url, "detail": self.detail}
+        else:
+            res["image_url"] = self.url
+        return res
 
 
 @dataclasses.dataclass
