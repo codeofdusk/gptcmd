@@ -62,6 +62,9 @@ class MessageAttachment(ABC):
     def to_openai(self) -> Dict[str, Any]:
         raise NotImplementedError
 
+    def __eq__(self, other):
+        return self.to_dict() == other.to_dict()
+
     def to_dict(self) -> Dict[str, Any]:
         "Exports this attachment as a serializable dict"
         return self.to_openai()
