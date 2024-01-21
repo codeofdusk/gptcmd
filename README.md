@@ -186,6 +186,38 @@ In fact, the `say` command just adds a user message and sends the conversation:
 3.141592653
 ```
 
+### Working with images
+OpenAI's vision model, currently in preview, supports messages containing images. The `model` command can be used to switch the currently active model. We'll use it now to switch to the preview image model. Note that the prompt updates to show the currently selected model:
+
+```
+(gpt-3.5-turbo) model gpt-4-vision-preview
+OK
+```
+
+Images can be attached to messages with the `image` command, which accepts two arguments: the location of the image, either a URL or path to a local file; and the index of the message to which the image should be attached (if unspecified, it defaults to the last). We'll ask GPT to describe an image by creating a user message and attaching an image from Wikimedia Commons:
+
+```
+(gpt-4-vision-preview) user What's in this image?
+OK
+(gpt-4-vision-preview) image https://upload.wikimedia.org/wikipedia/commons/c/ce/Long_cane.jpg
+Image added to "What's in this image?"
+```
+
+When viewing the conversation, an at sign before a message indicates an attachment (multiple at signs indicate multiple attachments):
+
+```
+(gpt-4-vision-preview) view
+@user: What's in this image?
+```
+
+Now, we can `send` our message to get a description:
+
+```
+(gpt-4-vision-preview) send
+...
+This is an image of a white cane, which is a tool used by individuals who are blind or visually impaired for mobility and navigation. The cane appears to be a long, straight rod with a grip at the top, a loop for securing it to the wrist or for hanging, and a red section near the bottom, which is often used for visibility purposes. The very bottom of the cane has a white tip, which is typically made of a material that can easily slide over various surfaces and provides tactile feedback to the user.
+```
+
 ### Managing messages
 The `pop` command with no argument deletes the last message of a conversation:
 
@@ -369,16 +401,11 @@ Unset all parameters
 ```
 
 ### Names
-GPT allows mesages to be annotated with the name of their author. If you have access to `gpt-4`, it seems to respond better to these annotations in my experience. The `model` command switches the active GPT model:
+GPT allows mesages to be annotated with the name of their author. If you have access to `gpt-4`, it seems to respond better to these annotations in my experience. The `name` command sets the name to be sent with all future messages of the specified role. Its first argument is the role to which this new name should be applied, and its second is the name to use:
 
 ```
 (gpt-3.5-turbo) model gpt-4
 OK
-```
-
-The `name` command sets the name to be sent with all future messages of the specified role. Its first argument is the role to which this new name should be applied, and its second is the name to use:
-
-```
 (gpt-4) name user Michael
 user set to 'Michael'
 (gpt-4) say Hello!

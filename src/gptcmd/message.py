@@ -397,6 +397,7 @@ class MessageThread(Sequence):
         """
         lines = (
             ("*" if display_indicators and msg._sticky else "")
+            + ("@" * len(msg._attachments) if display_indicators else "")
             + (msg.name if msg.name is not None else msg.role)
             + ": "
             + msg.content
@@ -438,12 +439,18 @@ class MessageThread(Sequence):
         Returns the literal keyword arguments passed to
         OpenAI.chat.completions.create.
         """
-        return {
+        res = {
             "model": self.model,
             "messages": [m.to_openai() for m in self._messages],
             "stream": self.stream,
             **self._api_params,
         }
+        if res["model"] == "gpt-4-vision-preview" and "max_tokens" not in res:
+            # For some unknown reason, OpenAI sets a very low
+            # default max_tokens. For consistency with other models,
+            # set it to the maximum if not overridden by the user.
+            res["max_tokens"] = 4096
+        return res
 
     def send(self) -> Union[Message, MessageStream]:
         """
