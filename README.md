@@ -290,7 +290,7 @@ The `temperature` parameter controls GPT's sampling temperature. A temperature o
 
 ```
 (gpt-3.5-turbo) set temperature 0
-OK
+temperature set to 0
 (gpt-3.5-turbo) say Tell me a fun fact about generative AI.
 ...
 Generative AI can create art that is so realistic that it has been sold at auction for over $400,000. In 2018, a portrait created by a generative AI program called "Edmond de Belamy" was sold at Christie's auction house in New York City. This marked the first time that a piece of AI-generated art had been sold at a major auction house.
@@ -310,7 +310,7 @@ Higher temperatures result in more apparent randomness, which can translate in s
 
 ```
 (gpt-3.5-turbo) set temperature 0.75
-OK
+temperature set to 0.75
 (gpt-3.5-turbo) retry
 ...
 Generative AI can create music that is so realistic, it is difficult to distinguish from compositions created by human composers. In fact, a piece of music composed by an AI program called AIVA was accepted by the American Society of Composers, Authors, and Publishers (ASCAP), making it the first AI-generated piece of music to be recognized by a professional music organization.
@@ -326,7 +326,7 @@ Too high, though, and GPT will just emit nonsense:
 
 ```
 (gpt-3.5-turbo) set temperature 2
-OK
+temperature set to 2
 (gpt-3.5-turbo) retry
 ...
 Generative AI systems such as StyleGAN computer programs essentially morph multiple average-per-formed components– rather than situ completed costume area beside time. There are generators solving photos backward-gen generate depicting costumes focusing pointing fire aspect letting content input forming muscles reaching plants including drawings whatever model constituent. ForeignKey Your virtual images think influences know example example TensorFlow
@@ -337,7 +337,7 @@ Another useful parameter is `timeout` which controls how long (in seconds) Gptcm
 
 ```
 (gpt-3.5-turbo) set timeout 0.5
-OK
+timeout set to 0.5
 (gpt-3.5-turbo) say Hello!
 ...
 Request timed out.
@@ -365,7 +365,7 @@ The `name` command sets the name to be sent with all future messages of the spec
 
 ```
 (gpt-4) name user Michael
-OK
+user set to 'Michael'
 (gpt-4) say Hello!
 ...
 Hello, Michael! How can I help you today?
@@ -392,11 +392,11 @@ Name annotations are useful for providing one- or multi-shot prompts to GPT, in 
 (gpt-4) system You are a helpful assistant who understands many languages very well, but can only speak Spanish and therefore you always respond in that language.
 OK
 (gpt-4) name system example_user
-OK
+system set to 'example_user'
 (gpt-4) system Hello!
 OK
 (gpt-4) name system example_assistant
-OK
+system set to 'example_assistant'
 (gpt-4) system ¡Hola! ¿Cómo estás?
 OK
 (gpt-4) view
@@ -582,7 +582,7 @@ First message selected: 'What is the closed-form formula to find the nth...'
 Last message selected: 'The closed-form formula to find the nth Fibonacci...'
 Unsaved detached messages will be lost.
 Confirm slice? (y/n)y
-OK
+Sliced
 induction2(gpt-3.5-turbo) thread
 detached thread
 (gpt-3.5-turbo) say Write a C program that implements this formula to print the first 10 Fibanacci numbers.
@@ -611,7 +611,7 @@ The `delete` command, with the name of a thread passed as an argument, deletes t
 
 ```
 (gpt-3.5-turbo) delete induction
-OK
+Deleted thread induction
 (gpt-3.5-turbo) threads
 induction2 (6 messages)
 (4 detached messages)

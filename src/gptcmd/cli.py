@@ -392,7 +392,7 @@ class Gptcmd(cmd.Cmd):
             if self._threads[arg] == self._current_thread:
                 self._current_thread = self._detached
             del self._threads[arg]
-            print("OK")
+            print(f"Deleted thread {arg}")
         else:
             print(f"{arg} doesn't exist")
 
@@ -445,7 +445,7 @@ class Gptcmd(cmd.Cmd):
         if not can_slice:
             return
         self._detached.messages = s
-        print("OK")
+        print("Sliced")
 
     def do_retry(self, arg):
         """
@@ -517,7 +517,7 @@ class Gptcmd(cmd.Cmd):
                 return
             try:
                 self._current_thread.set_api_param(key, val)
-                print("OK")
+                print(f"{key} set to {val!r}")
             except APIParameterError as e:
                 print(str(e))
 
@@ -559,10 +559,10 @@ class Gptcmd(cmd.Cmd):
             self._current_thread.set_api_param(
                 arg, self.thread_cls.DEFAULT_API_PARAMS[arg]
             )
-            print("Unset")
+            print(f"{arg} unset")
         else:
             del self._current_thread._api_params[arg]
-            print("Unset")
+            print(f"{arg} unset")
 
     def complete_unset(self, text, line, begidx, endidx):
         return self.__class__._complete_from_key(
@@ -599,7 +599,7 @@ class Gptcmd(cmd.Cmd):
         role = t[0]
         name = " ".join(t[1:])
         self._current_thread.names[role] = name
-        print("OK")
+        print(f"{role} set to {name!r}")
 
     def complete_name(self, text, line, begidx, endidx):
         if begidx <= 5:  # In the first argument
@@ -613,11 +613,12 @@ class Gptcmd(cmd.Cmd):
         if not arg:
             self._current_thread.names = {}
             print("Unset all names")
-        elif arg not in self._current_thread.names:
+        name = self._current_thread.names.get(arg)
+        if name is None:
             print(f"{arg} not set")
         else:
             del self._current_thread.names[arg]
-            print("Unnamed")
+            print(f"{arg} is no longer {name!r}")
 
     def complete_unname(self, text, line, begidx, endidx):
         return self.__class__._complete_from_key(
@@ -714,7 +715,6 @@ class Gptcmd(cmd.Cmd):
                 print("No file specified")
                 return
             arg = self.last_path
-            print(f"Saving to {os.path.abspath(arg)}")
         res = {}
         res["_meta"] = {"version": __version__}
         res["threads"] = {k: v.to_dict() for k, v in self._threads.items()}
@@ -726,8 +726,8 @@ class Gptcmd(cmd.Cmd):
             return
         for thread in self._threads.values():
             thread.dirty = False
+        print(f"{os.path.abspath(arg)} saved")
         self.last_path = arg
-        print("OK")
 
     def do_load(self, arg, _print_on_success=True):
         "Load all threads from the specified json file."
@@ -773,7 +773,7 @@ class Gptcmd(cmd.Cmd):
             )
         self.last_path = arg
         if _print_on_success:
-            print("OK")
+            print(f"{arg} loaded")
 
     def do_read(self, arg):
         """
@@ -791,13 +791,12 @@ class Gptcmd(cmd.Cmd):
         role = args[-1]
         try:
             with open(path, encoding="utf-8", errors="ignore") as fin:
-                self._current_thread.append(
-                    Message(content=fin.read(), role=role)
-                )
+                msg = Message(content=fin.read(), role=role)
+                self._current_thread.append(msg)
+                print(self.__class__._fragment("{msg} read as " + role, msg))
         except (FileNotFoundError, OSError, UnicodeDecodeError) as e:
             print(str(e))
             return
-        print("OK")
 
     def complete_read(self, text, line, begidx, endidx):
         if begidx > 5:  # Passed the first argument
@@ -810,11 +809,16 @@ class Gptcmd(cmd.Cmd):
             return
         try:
             with open(path, "w", encoding="utf-8", errors="ignore") as cam:
-                cam.write(self._current_thread.messages[-1].content)
+                msg = self._current_thread.messages[-1]
+                cam.write(msg.content)
+                print(
+                    self.__class__._fragment(
+                        "{msg} written to " + os.path.abspath(path), msg
+                    )
+                )
         except (OSError, UnicodeDecodeError) as e:
             print(str(e))
             return
-        print("OK")
 
     def complete_write(self, text, line, begidx, endidx):
         if begidx > 6:  # Passed the first argument
@@ -830,10 +834,10 @@ class Gptcmd(cmd.Cmd):
                 cam.write(
                     self._current_thread.render(display_indicators=False)
                 )
+            print(f"Transcribed to {os.path.abspath(path)}")
         except (OSError, UnicodeDecodeError) as e:
             print(str(e))
             return
-        print("OK")
 
     def do_quit(self, arg):
         "Exit the program."
