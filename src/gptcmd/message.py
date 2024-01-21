@@ -149,7 +149,7 @@ class MessageThread(Sequence):
         if api_params is not None:
             for key, val in api_params.items():
                 try:
-                    self.set_api_param(key, val, _init=True)
+                    self.set_api_param(key, val, _set_dirty=False)
                 except APIParameterError:
                     continue
         self.stream: bool = False
@@ -282,7 +282,9 @@ class MessageThread(Sequence):
         )
         return "\n".join(lines)
 
-    def set_api_param(self, key: str, val: Any, _init: bool = False) -> None:
+    def set_api_param(
+        self, key: str, val: Any, _set_dirty: bool = True
+    ) -> None:
         "Set an OpenAI API parameter to send with future messages"
         SPECIAL_OPTS = frozenset(("model", "messages", "stream"))
         opts = (
@@ -296,7 +298,7 @@ class MessageThread(Sequence):
         if key not in opts:
             raise APIParameterError(f"Invalid API parameter {key}")
         self._api_params[key] = val
-        if not _init:
+        if _set_dirty:
             self.dirty = True
 
     def _pre_send(self):
