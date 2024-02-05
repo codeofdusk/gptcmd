@@ -484,7 +484,7 @@ class Gptcmd(cmd.Cmd):
                 break
         self.do_send(None)
 
-    def do_model(self, arg):
+    def do_model(self, arg, _print_on_success=True):
         """
         Change the GPT model used by the current thread. Pass no argument to
         check the currently active model.
@@ -494,7 +494,8 @@ class Gptcmd(cmd.Cmd):
             print(f"Current model: {self._current_thread.model}")
         elif self._current_thread._is_valid_model(arg):
             self._current_thread.model = arg
-            print("OK")
+            if _print_on_success:
+                print("OK")
         else:
             print(f"{arg} is currently unavailable")
 
@@ -873,6 +874,11 @@ def main():
         help="The name of the thread to switch to on launch",
     )
     parser.add_argument(
+        "-m",
+        "--model",
+        help="The name of the model to switch to on launch",
+    )
+    parser.add_argument(
         "--version", help="Show version and exit", action="store_true"
     )
     args = parser.parse_args()
@@ -884,6 +890,8 @@ def main():
         shell.do_load(args.path, _print_on_success=False)
     if args.thread:
         shell.do_thread(args.thread, _print_on_success=False)
+    if args.model:
+        shell.do_model(args.model, _print_on_success=False)
     shell.cmdloop()
 
 
