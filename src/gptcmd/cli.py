@@ -452,10 +452,7 @@ class Gptcmd(cmd.Cmd):
         Resend up through the last non-assistant, non-sticky message to GPT.
         This command takes no arguments.
         """
-        if not self._current_thread or (
-            len(self._current_thread) == 1
-            and self._current_thread[0].role == "assistant"
-        ):
+        if not any(m.role != "assistant" for m in self._current_thread):
             print("Nothing to retry!")
             return
         if self._current_thread != self._detached:
