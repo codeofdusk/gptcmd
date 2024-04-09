@@ -187,35 +187,35 @@ In fact, the `say` command just adds a user message and sends the conversation:
 ```
 
 ### Working with images
-OpenAI's vision model, currently in preview, supports messages containing images. The `model` command can be used to switch the currently active model. We'll use it now to switch to the preview image model. Note that the prompt updates to show the currently selected model:
+OpenAI's vision model supports messages containing images. The `model` command can be used to switch the currently active model. We'll use it now to switch to a model with image support. Note that the prompt updates to show the currently selected model:
 
 ```
-(gpt-3.5-turbo) model gpt-4-vision-preview
+(gpt-3.5-turbo) model gpt-4-turbo
 OK
 ```
 
 Images can be attached to messages with the `image` command, which accepts two arguments: the location of the image, either a URL or path to a local file; and the index of the message to which the image should be attached (if unspecified, it defaults to the last). We'll ask GPT to describe an image by creating a user message and attaching an image from Wikimedia Commons:
 
 ```
-(gpt-4-vision-preview) user What's in this image?
+(gpt-4-turbo) user What's in this image?
 OK
-(gpt-4-vision-preview) image https://upload.wikimedia.org/wikipedia/commons/c/ce/Long_cane.jpg
+(gpt-4-turbo) image https://upload.wikimedia.org/wikipedia/commons/c/ce/Long_cane.jpg
 Image added to "What's in this image?"
 ```
 
 When viewing the conversation, an at sign before a message indicates an attachment (multiple at signs indicate multiple attachments):
 
 ```
-(gpt-4-vision-preview) view
+(gpt-4-turbo) view
 @user: What's in this image?
 ```
 
 Now, we can `send` our message to get a description:
 
 ```
-(gpt-4-vision-preview) send
+(gpt-4-turbo) send
 ...
-This is an image of a white cane, which is a tool used by individuals who are blind or visually impaired for mobility and navigation. The cane appears to be a long, straight rod with a grip at the top, a loop for securing it to the wrist or for hanging, and a red section near the bottom, which is often used for visibility purposes. The very bottom of the cane has a white tip, which is typically made of a material that can easily slide over various surfaces and provides tactile feedback to the user.
+This image shows a white cane, which is a tool commonly used by visually impaired and blind individuals to navigate their environment. The cane has a grip at the top, a long shaft, and a rounded tip at the bottom, which helps detect obstacles and surface textures when it is swept or tapped on the ground. The red section near the bottom of the cane is a common feature to enhance visibility to others.
 ```
 
 ### Managing messages
