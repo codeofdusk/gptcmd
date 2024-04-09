@@ -94,11 +94,9 @@ class Image(MessageAttachment):
         return {"type": "image_url", "url": self.url, "detail": self.detail}
 
     def to_openai(self) -> Dict[str, Any]:
-        res = {"type": "image_url"}
+        res = {"type": "image_url", "image_url": {"url": self.url}}
         if self.detail is not None:
-            res["image_url"] = {"url": self.url, "detail": self.detail}
-        else:
-            res["image_url"] = self.url
+            res["image_url"]["detail"] = self.detail
         return res
 
 
