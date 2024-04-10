@@ -155,7 +155,9 @@ class MessageThread(Sequence):
         self.stream: bool = False
         if model is None:
             models = self._openai.models.list().data
-            if self._is_valid_model("gpt-4", models=models):
+            if self._is_valid_model("gpt-4-turbo", models=models):
+                self.model = "gpt-4-turbo"
+            elif self._is_valid_model("gpt-4", models=models):
                 self.model = "gpt-4"
             elif self._is_valid_model("gpt-3.5-turbo", models=models):
                 self.model = "gpt-3.5-turbo"
@@ -230,7 +232,11 @@ class MessageThread(Sequence):
             raise CostEstimateUnavailableError(
                 "Unable to calculate token usage"
             )
-        if self.model.startswith("gpt-4"):
+        if self.model.startswith("gpt-4-turbo"):
+            return (1 * (self.prompt_tokens // 1000)) + (
+                3 * (self.sampled_tokens // 1000)
+            )
+        elif self.model.startswith("gpt-4"):
             return (3 * (self.prompt_tokens // 1000)) + (
                 6 * (self.sampled_tokens // 1000)
             )
@@ -368,6 +374,7 @@ class MessageThread(Sequence):
             if resp.model not in (
                 "gpt-4-0314",
                 "gpt-4-0613",
+                "gpt-4-turbo-2024-04-09",
             ) and resp.model.startswith("gpt-4"):
                 self.prompt_tokens = None
                 self.sampled_tokens = None
