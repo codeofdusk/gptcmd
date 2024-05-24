@@ -7,12 +7,10 @@ import re
 import sys
 
 from ast import literal_eval
+from .llm import CompletionError, InvalidAPIParameterError, OpenAI
 from .message import (
-    APIParameterError,
-    CostEstimateUnavailableError,
     Image,
     Message,
-    MessageStream,
     MessageThread,
     PopStickyMessageError,
 )
@@ -62,9 +60,12 @@ class Gptcmd(cmd.Cmd):
     def __init__(self, thread_cls=MessageThread, *args, **kwargs):
         self.thread_cls = thread_cls
         self.last_path = None
+        self._llm = OpenAI(openai.OpenAI())
         self._detached = self.thread_cls("*detached*")
         self._current_thread = self._detached
         self._threads = {}
+        self._session_cost_in_cents = 0
+        self._session_cost_incomplete = False
         super().__init__(*args, **kwargs)
 
     @property
@@ -74,7 +75,7 @@ class Gptcmd(cmd.Cmd):
             if self._current_thread == self._detached
             else self._current_thread.name
         )
-        return f"{threadname}({self._current_thread.model}) "
+        return f"{threadname}({self._llm.model}) "
 
     @staticmethod
     def _fragment(tpl: str, msg: Message) -> str:
@@ -174,9 +175,7 @@ class Gptcmd(cmd.Cmd):
             targetstr = "new thread"
             self._threads[arg] = self.thread_cls(
                 name=arg,
-                model=self._current_thread.model,
                 messages=self._current_thread.messages,
-                api_params=self._current_thread.api_params,
                 names=self._current_thread.names,
             )
             if self._current_thread == self._detached and self._detached.dirty:
@@ -287,46 +286,57 @@ class Gptcmd(cmd.Cmd):
 
     def do_send(self, arg):
         """
-        Send the current thread to GPT, and print the response. This command
-        takes no arguments.
+        Send the current thread to the language model and print the response.
+        This command takes no arguments.
         """
         print("...")
         try:
-            res = self._current_thread.send()
+            res = self._llm.complete(self._current_thread)
+            self._current_thread.append(res.message)
         except KeyboardInterrupt:
             return
-        except (NotImplementedError, openai.OpenAIError) as e:
+        except (CompletionError, NotImplementedError, ValueError) as e:
             print(str(e))
             return
-        if isinstance(res, Message):
-            print(res.content)
-        elif isinstance(res, MessageStream):
-            try:
-                for chunk in res:
-                    if "content" in chunk:
-                        print(chunk["content"], end="")
-                print("\n", end="")
-            except KeyboardInterrupt:
-                print("\nDisconnected from stream")
-                return
-        cost_threads = (self._detached, *self._threads.values())
         try:
-            dollars, cents = divmod(
-                sum(th.cost_cents for th in cost_threads), 100
-            )
-            prompt_tokens = sum(th.prompt_tokens for th in cost_threads)
-            sampled_tokens = sum(th.sampled_tokens for th in cost_threads)
-            print(
-                f"Estimated session cost: ${dollars}.{cents:02d}"
-                f" ({prompt_tokens} prompt, {sampled_tokens} sampled)"
-            )
-        except CostEstimateUnavailableError:
-            pass
+            for chunk in res:
+                print(chunk, end="")
+            print("\n", end="")
+        except KeyboardInterrupt:
+            print("\nDisconnected from stream")
+        finally:
+            cost_info = ""
+            if res.cost_in_cents is not None:
+                self._session_cost_in_cents += res.cost_in_cents
+                cost = round(self._session_cost_in_cents / 100, 2)
+                prefix = (
+                    "Incomplete estimate of session cost"
+                    if self._session_cost_incomplete
+                    else "Estimated session cost"
+                )
+                cost_info = f"{prefix}: ${cost:.2f}"
+            else:
+                self._session_cost_incomplete = True
+
+            token_info = ""
+            if res.prompt_tokens and res.sampled_tokens:
+                token_info = (
+                    f"{res.prompt_tokens} prompt, {res.sampled_tokens} sampled"
+                    " tokens used for this request"
+                )
+
+            if cost_info and token_info:
+                print(f"{cost_info} ({token_info})")
+            elif token_info:
+                print(token_info)
+            elif cost_info:
+                print(cost_info)
 
     def do_say(self, arg):
         """
         Append a new user message (with content provided as argument) to the
-        current thread, then send the thread to GPT and print the response.
+        current thread, then send the thread to the language model and print
+        the response.
         example: "say Hello!"
         """
         self._current_thread.append(Message(content=arg, role="user"))
@@ -450,8 +460,8 @@ class Gptcmd(cmd.Cmd):
 
     def do_retry(self, arg):
         """
-        Resend up through the last non-assistant, non-sticky message to GPT.
-        This command takes no arguments.
+        Resend up through the last non-assistant, non-sticky message to the
+        language model. This command takes no arguments.
         """
         if not any(m.role != "assistant" for m in self._current_thread):
             print("Nothing to retry!")
@@ -487,14 +497,14 @@ class Gptcmd(cmd.Cmd):
 
     def do_model(self, arg, _print_on_success=True):
         """
-        Change the GPT model used by the current thread. Pass no argument to
+        Change the model used by the current thread. Pass no argument to
         check the currently active model.
         example: "model gpt-3.5-turbo"
         """
         if not arg:
-            print(f"Current model: {self._current_thread.model}")
-        elif self._current_thread._is_valid_model(arg):
-            self._current_thread.model = arg
+            print(f"Current model: {self._llm.model}")
+        elif arg in self._llm.valid_models:
+            self._llm.model = arg
             if _print_on_success:
                 print("OK")
         else:
@@ -502,12 +512,15 @@ class Gptcmd(cmd.Cmd):
 
     def do_set(self, arg):
         """
-        Set a GPT API parameter. Pass no arguments to see currently set
+        Set an API parameter. Pass no arguments to see currently set
         parameters. Valid Python literals are supported (None represents null).
         example: "set temperature 0.9"
         """
         if not arg:
-            for k, v in self._current_thread._api_params.items():
+            if not self._llm.api_params:
+                print("No API parameter definitions")
+                return
+            for k, v in self._llm.api_params.items():
                 print(f"{k}: {repr(v)}")
         else:
             t = arg.split()
@@ -518,9 +531,9 @@ class Gptcmd(cmd.Cmd):
                 print("Invalid syntax")
                 return
             try:
-                self._current_thread.set_api_param(key, val)
+                self._llm.set_api_param(key, val)
                 print(f"{key} set to {val!r}")
-            except APIParameterError as e:
+            except InvalidAPIParameterError as e:
                 print(str(e))
 
     def complete_set(self, text, line, begidx, endidx):
@@ -546,25 +559,19 @@ class Gptcmd(cmd.Cmd):
 
     def do_unset(self, arg):
         """
-        Clear the definition of a custom GPT API parameter. Pass no arguments
+        Clear the definition of a custom API parameter. Pass no arguments
         to clear all parameters.
-        example: "unset response_timeout"
+        example: "unset timeout"
         """
-        if not arg:
-            self._current_thread._api_params = (
-                self.thread_cls.DEFAULT_API_PARAMS.copy()
-            )
-            print("Unset all parameters")
-        elif arg not in self._current_thread._api_params:
-            print(f"{arg} not set")
-        elif arg in self.thread_cls.DEFAULT_API_PARAMS:
-            self._current_thread.set_api_param(
-                arg, self.thread_cls.DEFAULT_API_PARAMS[arg]
-            )
-            print(f"{arg} unset")
-        else:
-            del self._current_thread._api_params[arg]
-            print(f"{arg} unset")
+        try:
+            if not arg:
+                self._llm.unset_api_param(None)
+                print("Unset all parameters")
+            else:
+                self._llm.unset_api_param(arg)
+                print(f"{arg} unset")
+        except InvalidAPIParameterError as e:
+            print(e)
 
     def complete_unset(self, text, line, begidx, endidx):
         return self.__class__._complete_from_key(
@@ -576,23 +583,26 @@ class Gptcmd(cmd.Cmd):
         Toggle streaming, which allows responses to be displayed as they are
         generated. This command takes no arguments.
         """
-        self._current_thread.stream = not self._current_thread.stream
-        if self._current_thread.stream:
+        self._llm.stream = not self._llm.stream
+        if self._llm.stream:
             print("On")
         else:
             print("Off")
 
     def do_name(self, arg):
         """
-        Set a name to send to GPT for all future messages of the specified
-        role. First argument is the role (user/assistant/system), second is
-        the name to send. Pass no arguments to see all set names in this
-        thread.
+        Set a name to send to the language model for all future messages of
+        the specified role. First argument is the role
+        (user/assistant/system), second is the name to send. Pass no arguments
+        to see all set names in this thread.
         example: "name user Bill"
         """
         if not arg:
             for k, v in self._current_thread.names.items():
                 print(f"{k}: {v}")
+            return
+        if not self._llm.supports_name:
+            print("Name definition not supported")
             return
         t = arg.split()
         if len(t) != 2 or not self.__class__._validate_role(t[0]):
@@ -609,9 +619,12 @@ class Gptcmd(cmd.Cmd):
 
     def do_unname(self, arg):
         """
-        Clear the definition of a GPT name. Pass no arguments to clear all
+        Clear the definition of a name. Pass no arguments to clear all
         names.
         """
+        if not self._llm.supports_name:
+            print("Name definition not supported")
+            return
         if not arg:
             self._current_thread.names = {}
             print("Unset all names")
@@ -654,6 +667,9 @@ class Gptcmd(cmd.Cmd):
                 f"Usage: rename <{'|'.join(self.__class__.KNOWN_ROLES)}>"
                 " <message range> [name]"
             )
+            return
+        if not self._llm.supports_name:
+            print("Name definition not supported")
             return
         role, ref, name = m.groups()
         try:
@@ -760,9 +776,7 @@ class Gptcmd(cmd.Cmd):
             return
         self._threads.update(
             {
-                k: self.thread_cls.from_dict(
-                    v, name=k, model=self._current_thread.model
-                )
+                k: self.thread_cls.from_dict(v, name=k)
                 for k, v in d["threads"].items()
             }
         )
@@ -867,10 +881,13 @@ class Gptcmd(cmd.Cmd):
         try:
             msg = self._current_thread[idx]
             msg._attachments.append(img)
-            if not (
-                self._current_thread.model == "gpt-4-turbo"
-                or "vision" in self._current_thread.model
-            ) and self._current_thread._is_valid_model("gpt-4-turbo"):
+            if (
+                not (
+                    self._llm.model in ("gpt-4-turbo", "gpt-4o")
+                    or "vision" in self._llm.model
+                )
+                and "gpt-4-turbo" in self._llm.valid_models
+            ):
                 print(
                     "Warning! The selected model may not support vision. "
                     "If sending this conversation fails, try switching to a "
