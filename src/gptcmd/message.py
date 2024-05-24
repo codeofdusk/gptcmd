@@ -1,28 +1,13 @@
 import base64
 import dataclasses
-import inspect
 import mimetypes
-
-import openai
-
 from abc import ABC, abstractmethod
 from collections.abc import Sequence
-from typing import (
-    Any,
-    Dict,
-    Iterable,
-    List,
-    Optional,
-    Tuple,
-    Type,
-    TypeVar,
-    Union,
-)
-
+from typing import Any, ClassVar, Dict, Iterable, Optional, List, Tuple, Type
 
 """
-This module contains classes and types for interacting with messages, message
-threads, and the OpenAI API.
+This module contains classes and types for interacting with messages and
+message threads.
 Copyright 2023 Bill Dengler
 This Source Code Form is subject to the terms of the Mozilla Public
 License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -36,43 +21,51 @@ class MessageAttachment(ABC):
     image for vision models.
     """
 
-    _type_registry = {}
+    _type_registry: Dict[str, Type["MessageAttachment"]] = {}
+    type: ClassVar[str]
 
     @classmethod
-    def register_openai_type(cls, openai_type: str):
-        def decorator(subclass):
-            cls._type_registry[openai_type] = subclass
-            return subclass
-
-        return decorator
+    def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
+        cls._type_registry[cls.type] = cls
 
     @classmethod
-    def from_dict(cls, d: Dict[str, Any]):
+    def from_dict(cls, d: Dict[str, Any]) -> "MessageAttachment":
         """
         Instantiate a MessageAttachment from a dict in the format returned by
         MessageAttachment.to_dict()
         """
-        openai_type = d.get("type")
-        if openai_type in cls._type_registry:
-            return cls._type_registry[openai_type].from_dict(d)
+        attachment_type = d.get("type")
+        if attachment_type in cls._type_registry:
+            return cls._type_registry[attachment_type]._deserialize(
+                d.get("data", {})
+            )
         else:
-            raise ValueError(f"Unrecognized type: {openai_type}")
+            raise ValueError(f"Unrecognized type: {attachment_type}")
+
+    @classmethod
+    @abstractmethod
+    def _deserialize(cls, d: Dict[str, Any]) -> "MessageAttachment":
+        "Deserialize a dict into a MessageAttachment subclass instance"
+        pass
+
+    def to_dict(self) -> Dict[str, Any]:
+        "Exports this attachment as a serializable dict"
+        return {"type": self.__class__.type, "data": self._serialize()}
 
     @abstractmethod
-    def to_openai(self) -> Dict[str, Any]:
-        raise NotImplementedError
+    def _serialize(self) -> Dict[str, Any]:
+        "Serialize this attachment into a dict"
+        pass
 
     def __eq__(self, other):
         return self.to_dict() == other.to_dict()
 
-    def to_dict(self) -> Dict[str, Any]:
-        "Exports this attachment as a serializable dict"
-        return self.to_openai()
 
-
-@MessageAttachment.register_openai_type("image_url")
 class Image(MessageAttachment):
-    "An image reachable by URL that can be fetched by the OpenAI API."
+    "An image reachable by URL that can be fetched by the LLM API."
+
+    type = "image_url"
 
     def __init__(self, url: str, detail: Optional[str] = None):
         self.url = url
@@ -87,22 +80,19 @@ class Image(MessageAttachment):
         return cls(url=f"data:{mimetype};base64,{b64data}", *args, **kwargs)
 
     @classmethod
-    def from_dict(cls, d: Dict[str, Any]):
-        return cls(url=d.get("url"), detail=d.get("detail"))
+    def _deserialize(cls, d: Dict[str, Any]) -> "Image":
+        return cls(url=d["url"], detail=d.get("detail"))
 
-    def to_dict(self) -> Dict[str, Any]:
-        return {"type": "image_url", "url": self.url, "detail": self.detail}
-
-    def to_openai(self) -> Dict[str, Any]:
-        res = {"type": "image_url", "image_url": {"url": self.url}}
+    def _serialize(self) -> Dict[str, Any]:
+        res = {"url": self.url}
         if self.detail is not None:
-            res["image_url"]["detail"] = self.detail
+            res["detail"] = self.detail
         return res
 
 
 @dataclasses.dataclass
 class Message:
-    """A message sent to or received from OpenAI."""
+    """A message sent to or received from an LLM."""
 
     #: The text content of the message
     content: str
@@ -134,22 +124,6 @@ class Message:
                 kwargs[k] = v
         return cls(**kwargs)
 
-    def to_openai(self):
-        res = dataclasses.asdict(
-            self,
-            dict_factory=lambda x: {
-                k: v
-                for k, v in x
-                if not (k.startswith("_") or (k == "name" and v is None))
-            },
-        )
-        if self._attachments:
-            res["content"] = [
-                {"type": "text", "text": self.content},
-                *[a.to_openai() for a in self._attachments],
-            ]
-        return res
-
     def to_dict(self) -> Dict[str, Any]:
         "Exports this message as a serializable dict"
         res = {f.name: getattr(self, f.name) for f in dataclasses.fields(self)}
@@ -157,96 +131,27 @@ class Message:
         return res
 
 
-class _stream:
-    """
-    A base class for streaming message objects that should not be
-    instantiated directly.
-    """
-
-    def __init__(self, backing_stream):
-        self._stream = backing_stream
-        #: A Message containing all content streamed so far
-        self.message = Message(content="", role="")
-
-    def _handle_chunk(self, chunk) -> Dict[str, Any]:
-        delta = {
-            k: v
-            for k, v in chunk.choices[0].delta.model_dump().items()
-            if v is not None
-        }
-        for k, v in delta.items():
-            if hasattr(self.message, k):
-                setattr(self.message, k, getattr(self.message, k) + v)
-        return dict(delta)
-
-
-class MessageStream(_stream):
-    "An iterator representing an in-progress message from GPT"
-
-    def __iter__(self):
-        return self
-
-    def __next__(self) -> Dict[str, Any]:
-        chunk = next(self._stream)
-        return self._handle_chunk(chunk)
-
-
-class AioMessageStream(_stream):
-    """
-    An iterator representing an in-progress message from GPT that was
-    requested using MessageThread.asend
-    """
-
-    def __aiter__(self):
-        return self
-
-    async def __anext__(self) -> Dict[str, Any]:
-        chunk = await anext(self._stream)
-        return self._handle_chunk(chunk)
-
-
-class CostEstimateUnavailableError(Exception):
-    "Thrown when a MessageThread's cost cannot be estimated"
-    pass
-
-
 class PopStickyMessageError(Exception):
     "Thrown when attempting to pop a Message marked sticky"
     pass
 
 
-class APIParameterError(Exception):
-    "Thrown when an API parameter cannot be set"
-    pass
-
-
 class MessageThread(Sequence):
-    DEFAULT_API_PARAMS: Dict[str, Any] = {"temperature": 0.6}
-
     def __init__(
         self,
         name: str,
-        model: Optional[str] = None,
         messages: Optional[Iterable[Message]] = None,
-        api_params: Optional[Dict[str, Any]] = None,
         names: Optional[Dict[str, str]] = None,
     ):
-        """A conversation thread between an end-user and GPT
+        """A conversation thread
 
         args:
             name: The display name of this thread
-            model: The OpenAI model to use
-                (or None to choose the best available)
             messages: An iterable of Message objects from which to populate
                 this thread
-            api_params: OpenAI API parameters (such as temperature) to set
-            names: Mapping of OpenAI roles to names that should be set on
+            names: Mapping of roles to names that should be set on
                 future messages added to this thread
         """
-        self._openai = openai.OpenAI()
-        self._async_openai: Optional[openai.AsyncOpenAI] = (
-            None  # Lazily create as not used in the CLI
-        )
         self.name: str = name
         self._messages: List[Message] = (
             [dataclasses.replace(m) for m in messages]
@@ -255,59 +160,17 @@ class MessageThread(Sequence):
         )
         self.names: Dict[str, str] = names if names is not None else {}
         self.dirty: bool = False
-        self.prompt_tokens: Optional[int] = 0
-        self.sampled_tokens: Optional[int] = 0
-        self._api_params: Dict[str, Any] = (
-            self.__class__.DEFAULT_API_PARAMS.copy()
-        )
-        if api_params is not None:
-            for key, val in api_params.items():
-                try:
-                    self.set_api_param(key, val, _set_dirty=False)
-                except APIParameterError:
-                    continue
-        self.stream: bool = False
-        if model is None:
-            models = self._openai.models.list().data
-            if self._is_valid_model("gpt-4-turbo", models=models):
-                self.model = "gpt-4-turbo"
-            elif self._is_valid_model("gpt-4", models=models):
-                self.model = "gpt-4"
-            elif self._is_valid_model("gpt-3.5-turbo", models=models):
-                self.model = "gpt-3.5-turbo"
-            else:
-                raise RuntimeError("No known GPT model available!")
-        else:
-            self.model = model
 
     @classmethod
-    def from_dict(
-        cls, d: Dict[str, Any], name: str, model: Optional[str] = None
-    ):
+    def from_dict(cls, d: Dict[str, Any], name: str):
         """
         Instantiate a MessageThread from a dict in the format returned by
         MessageThread.to_dict()
         """
         messages = [Message.from_dict(m) for m in d.get("messages", [])]
-        api_params = d.get("api_params")
         names = d.get("names")
-        res = cls(
-            name=name,
-            messages=messages,
-            api_params=api_params,
-            names=names,
-            model=model,
-        )
+        res = cls(name=name, messages=messages, names=names)
         return res
-
-    def _is_valid_model(
-        self,
-        model: str,
-        models: Optional[List[openai.types.model.Model]] = None,
-    ) -> bool:
-        if models is None:
-            models = self._openai.models.list().data
-        return model in {m.id for m in models}
 
     def __repr__(self) -> str:
         return f"<{self.name} MessageThread {self._messages!r}>"
@@ -315,20 +178,8 @@ class MessageThread(Sequence):
     def __getitem__(self, n):
         return self._messages[n]
 
-    def __len__(self, *args, **kwargs) -> int:
-        return self._messages.__len__(*args, **kwargs)
-
-    @property
-    def api_params(self) -> Dict[str, Any]:
-        "The user-defined OpenAI API parameters in this thread"
-        return {
-            k: v
-            for k, v in self._api_params.items()
-            if not (
-                k in self.__class__.DEFAULT_API_PARAMS
-                and self._api_params[k] == self.__class__.DEFAULT_API_PARAMS[k]
-            )
-        }
+    def __len__(self) -> int:
+        return len(self._messages)
 
     @property
     def messages(self) -> Tuple[Message, ...]:
@@ -340,26 +191,6 @@ class MessageThread(Sequence):
         self.dirty = True
 
     @property
-    def cost_cents(self) -> int:
-        "The estimated cost (in cents) of OpenAI API calls from this thread"
-        if self.prompt_tokens is None or self.sampled_tokens is None:
-            raise CostEstimateUnavailableError(
-                "Unable to calculate token usage"
-            )
-        if self.model.startswith("gpt-4-turbo"):
-            return (1 * (self.prompt_tokens // 1000)) + (
-                3 * (self.sampled_tokens // 1000)
-            )
-        elif self.model.startswith("gpt-4"):
-            return (3 * (self.prompt_tokens // 1000)) + (
-                6 * (self.sampled_tokens // 1000)
-            )
-        else:
-            raise CostEstimateUnavailableError(
-                f"Unsupported model: {self.model}"
-            )
-
-    @property
     def stickys(self) -> List[Message]:
         return [m for m in self._messages if m._sticky]
 
@@ -368,7 +199,6 @@ class MessageThread(Sequence):
         return {
             "messages": [m.to_dict() for m in self._messages],
             "names": self.names.copy(),
-            "api_params": self.api_params,
         }
 
     def append(self, message: Message) -> None:
@@ -402,114 +232,6 @@ class MessageThread(Sequence):
             for msg in self._messages[start_index:end_index]
         )
         return "\n".join(lines)
-
-    def set_api_param(
-        self, key: str, val: Any, _set_dirty: bool = True
-    ) -> None:
-        "Set an OpenAI API parameter to send with future messages"
-        SPECIAL_OPTS = frozenset(("model", "messages", "stream"))
-        opts = (
-            frozenset(
-                inspect.signature(
-                    self._openai.chat.completions.create
-                ).parameters.keys()
-            )
-            - SPECIAL_OPTS
-        )
-        if key not in opts:
-            raise APIParameterError(f"Invalid API parameter {key}")
-        self._api_params[key] = val
-        if _set_dirty:
-            self.dirty = True
-
-    def _pre_send(self):
-        """
-        A method called when sending a thread before the actual OpenAI API
-        call.
-        """
-        if self._api_params.get("n", 1) > 1 and self.stream:
-            raise NotImplementedError(
-                "Streaming multiple completions is not currently supported"
-            )
-
-    def _get_openai_kwargs(self) -> Dict[str, Any]:
-        """
-        Returns the literal keyword arguments passed to
-        OpenAI.chat.completions.create.
-        """
-        res = {
-            "model": self.model,
-            "messages": [m.to_openai() for m in self._messages],
-            "stream": self.stream,
-            **self._api_params,
-        }
-        if res["model"] == "gpt-4-vision-preview" and "max_tokens" not in res:
-            # For some unknown reason, OpenAI sets a very low
-            # default max_tokens. For consistency with other models,
-            # set it to the maximum if not overridden by the user.
-            res["max_tokens"] = 4096
-        return res
-
-    def send(self) -> Union[Message, MessageStream]:
-        """
-        Send the current contents of this thread to GPT and append the result
-        to this thread.
-        """
-        self._pre_send()
-        resp = self._openai.chat.completions.create(
-            **self._get_openai_kwargs()
-        )
-        return self._post_send(resp, MessageStream)
-
-    async def asend(self) -> Union[Message, AioMessageStream]:
-        """
-        Asynchronously send the current contents of this thread to GPT and
-        append the result to this thread. Note that this method must
-        be awaited.
-        """
-        if self._async_openai is None:
-            self._async_openai = openai.AsyncOpenAI()
-        self._pre_send()
-        resp = await self._openai.chat.completions.create(
-            **self._get_openai_kwargs()
-        )
-        return self._post_send(resp, AioMessageStream)
-
-    S = TypeVar("S", bound=_stream)
-
-    def _post_send(self, resp, stream_cls: Type[S]) -> Union[Message, S]:
-        "Handles API response objects generated by openai."
-        if not self.stream:
-            if resp.model not in (
-                "gpt-4-0314",
-                "gpt-4-0613",
-                "gpt-4-turbo-2024-04-09",
-            ) and resp.model.startswith("gpt-4"):
-                self.prompt_tokens = None
-                self.sampled_tokens = None
-            if self.prompt_tokens is not None:
-                self.prompt_tokens += resp.usage.prompt_tokens
-            if self.sampled_tokens is not None:
-                self.sampled_tokens += resp.usage.completion_tokens
-            res = None
-            for choice in resp.choices:
-                msg = Message(
-                    content=choice.message.content,
-                    role=choice.message.role,
-                )
-                self.append(msg)
-                if res is None:
-                    res = msg  # Return the first choice
-            if res is not None:
-                return res
-            else:
-                raise RuntimeError("Empty OpenAI choices!")
-        else:
-            self.prompt_tokens = None
-            self.sampled_tokens = None
-            s = stream_cls(resp)
-            self.append(s.message)
-            return s
 
     def pop(self, n: Optional[int] = None) -> Message:
         "Remove the nth message from this thread and return it"
