@@ -594,7 +594,7 @@ class Gptcmd(cmd.Cmd):
                 print(f"{k}: {v}")
             return
         t = arg.split()
-        if len(t) != 2:
+        if len(t) != 2 or not self.__class__._validate_role(t[0]):
             print("Usage: name <user|assistant|system> <new name>")
             return
         role = t[0]
