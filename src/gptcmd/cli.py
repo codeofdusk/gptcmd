@@ -531,8 +531,8 @@ class Gptcmd(cmd.Cmd):
                 print("Invalid syntax")
                 return
             try:
-                self._llm.set_api_param(key, val)
-                print(f"{key} set to {val!r}")
+                validated_val = self._llm.set_api_param(key, val)
+                print(f"{key} set to {validated_val!r}")
             except InvalidAPIParameterError as e:
                 print(str(e))
 

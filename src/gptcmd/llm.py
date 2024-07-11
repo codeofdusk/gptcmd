@@ -69,14 +69,11 @@ class LLMProvider(ABC):
     @abstractmethod
     def validate_api_params(self, params: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Given a dict of OpenAI compatable API parameters, this method:
+        Given a dict of API parameters, this method:
         Raises InvalidAPIParameterError if this model doesn't support a
         parameter defined in the dictionary.
-        For parameters where the format or range of acceptable values is
-        different for this LLM than for OpenAI, performs the
-        needed conversions.
-        This method is used for standalone validation, but is also intended
-        as a helper method for complete.
+        If the user-provided value is out of range or in the incorrect format,
+        this method adjusts the value accordingly.
         """
         return params
 
@@ -92,12 +89,13 @@ class LLMProvider(ABC):
     def api_params(self) -> Dict[str, Any]:
         return self._api_params.copy()
 
-    def set_api_param(self, key: str, value: Any) -> None:
+    def set_api_param(self, key: str, value: Any) -> Any:
         """Set an API parameter after validating it."""
         new_params = self._api_params.copy()
         new_params[key] = value
         validated_params = self.validate_api_params(new_params)
         self._api_params = validated_params
+        return validated_params.get(key)
 
     def unset_api_param(self, key: Optional[str] = None) -> None:
         if key is None:
