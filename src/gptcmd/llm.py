@@ -175,6 +175,10 @@ class OpenAI(LLMProvider):
                 Decimal("5") / Decimal("1000000"),
                 Decimal("15") / Decimal("1000000"),
             ),
+            "gpt-4o-mini-2024-07-18": (
+                Decimal("0.15") / Decimal("1000000"),
+                Decimal("0.6") / Decimal("1000000"),
+            ),
             "gpt-4-turbo-2024-04-09": (
                 Decimal("10") / Decimal("1000000"),
                 Decimal("30") / Decimal("1000000"),
