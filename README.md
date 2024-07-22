@@ -313,7 +313,7 @@ Thus, we can conclude that pi is not exactly equal to 3.14628.
 ```
 
 ### Message streaming
-The `stream` command toggles OpenAI message streaming. When streaming is enabled, long responses from GPT are output in real time as they are generated. While a message is being streamed, pressing <kbd>Control</kbd>+<kbd>c</kbd> causes Gptcmd to stop waiting for the message to generate fully, so other commands can be used. Note that if using gpt-4, Gptcmd's gpt-4 cost estimator is incompatible with streamed responses.
+The `stream` command toggles OpenAI message streaming. By default, streaming is enabled, so long responses from GPT are output in real time as they are generated. While a message is being streamed, pressing <kbd>Control</kbd>+<kbd>c</kbd> causes Gptcmd to stop waiting for the message to generate fully, so other commands can be used. When streaming is disabled, Gptcmd retrieves an entire response for each query and displays it when it arrives.
 
 ### API parameters
 Gptcmd supports customization of [chat completion API parameters](https://platform.openai.com/docs/api-reference/chat/create), such as `max_tokens` and `temperature`. The `set` command sets an OpenAI API parameter. When setting a parameter, the first argument to `set` is the name of the parameter and the second argument is its value (valid Python literals are supported). A value of `None` is equivalent to sending `null` via the API.

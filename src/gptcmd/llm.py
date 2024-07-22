@@ -149,6 +149,7 @@ class OpenAI(LLMProvider):
         self._client = client
         self._models = {m.id for m in self._client.models.list().data}
         super().__init__(*args, **kwargs)
+        self.stream = True
 
     def _message_to_openai(self, msg: Message) -> Dict[str, Any]:
         res = dataclasses.asdict(
