@@ -883,7 +883,8 @@ class Gptcmd(cmd.Cmd):
             msg._attachments.append(img)
             if (
                 not (
-                    self._llm.model in ("gpt-4-turbo", "gpt-4o")
+                    "gpt-4-turbo" in self._llm.model
+                    or "gpt-4o" in self._llm.model
                     or "vision" in self._llm.model
                 )
                 and "gpt-4-turbo" in self._llm.valid_models
