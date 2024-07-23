@@ -292,7 +292,13 @@ class OpenAI(LLMProvider):
         return self._models
 
     def get_best_model(self):
-        BEST_MODELS = ("gpt-4-turbo", "gpt-4o-mini", "gpt-4", "gpt-3.5-turbo")
+        BEST_MODELS = (
+            "gpt-4o",
+            "gpt-4-turbo",
+            "gpt-4o-mini",
+            "gpt-4",
+            "gpt-3.5-turbo",
+        )
         res = next(
             (model for model in BEST_MODELS if model in self.valid_models),
             None,
