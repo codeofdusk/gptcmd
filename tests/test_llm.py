@@ -57,6 +57,15 @@ class TestLLMProvider(unittest.TestCase):
         self.assertEqual(response.message.content, "Cactus cactus!")
         self.assertEqual(response.message.role, "assistant")
 
+    def test_default_text_iter(self):
+        messages = [Message(content="Testing testing", role="user")]
+        response = self.llm.complete(messages)
+        self.assertIsInstance(response, LLMResponse)
+        buf = ""
+        for chunk in response:
+            buf += chunk
+        self.assertEqual(buf, "Cactus cactus!")
+
     def test_valid_models(self):
         self.assertEqual(self.llm.valid_models, ["saguaro-1", "saguaro-2"])
 
