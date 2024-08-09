@@ -172,6 +172,10 @@ class OpenAI(LLMProvider):
         model: str, prompt_tokens: int, sampled_tokens: int
     ) -> Optional[Decimal]:
         COST_PER_PROMPT_SAMPLED: Dict[str, Tuple[Decimal, Decimal]] = {
+            "gpt-4o-2024-08-06": (
+                Decimal("2.5") / Decimal("1000000"),
+                Decimal("10") / Decimal("1000000"),
+            ),
             "gpt-4o-2024-05-13": (
                 Decimal("5") / Decimal("1000000"),
                 Decimal("15") / Decimal("1000000"),
