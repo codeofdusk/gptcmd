@@ -53,14 +53,17 @@ class LLMProvider(ABC):
     """
 
     supports_name = False
-    _attachment_formatters: Dict[
-        Type[MessageAttachment], Callable[[MessageAttachment], Dict[str, Any]]
-    ] = {}
 
     def __init__(self, model: Optional[str] = None):
         self.model: Optional[str] = model or self.get_best_model()
         self._api_params: Dict[str, Any] = {}
         self.stream: bool = False
+
+    def __init_subclass__(cls):
+        cls._attachment_formatters: Dict[
+            Type[MessageAttachment],
+            Callable[[MessageAttachment], Dict[str, Any]],
+        ] = {}
 
     @abstractmethod
     def complete(self, messages: Sequence[Message]) -> LLMResponse:
