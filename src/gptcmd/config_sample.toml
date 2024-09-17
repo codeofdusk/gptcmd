@@ -1,0 +1,4 @@
+# Gptcmd configuration
+
+# This option is used by the application for version tracking.
+schema_version = "0.1.0"

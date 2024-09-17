@@ -12,6 +12,17 @@ Once Gptcmd starts, it presents a prompt containing the name of the currently ac
 
 Gptcmd has a help facility that provides a list of available commands and brief usage hints for each. The `help` command with no arguments provides a list of available commands. Passing a command as an argument to `help` returns information on the selected command.
 
+### Configuring Gptcmd
+When Gptcmd starts for the first time, it generates a configuration file whose location depends on your operating system:
+
+Platform | Config location
+--- | ---
+Windows | `%appdata%\gptcmd\config.toml`
+MacOS | `~/Library/Application Support/gptcmd/config.toml`
+Other | `$XDG_CONFIG_HOME/gptcmd/config.toml` or `~/.config/gptcmd/config.toml`
+
+You may open Gptcmd's configuration file in a text editor to change application settings. The file contains comments that describe the available options. Configuration changes will be applied the next time Gptcmd is restarted.
+
 ### Simple conversation
 The `say` command sends a message to GPT:
 
@@ -686,13 +697,15 @@ Gptcmd supports a few command line parameters:
 
 ```
 $ gptcmd -h
-usage: gptcmd [-h] [-t THREAD] [-m MODEL] [--version] [path]
+usage: gptcmd [-h] [-c CONFIG] [-t THREAD] [-m MODEL] [--version] [path]
 
 positional arguments:
   path                  The path to a JSON file of named threads to load on launch
 
 options:
   -h, --help            show this help message and exit
+  -c CONFIG, --config CONFIG
+                        The path to a Gptcmd configuration file to use for this session
   -t THREAD, --thread THREAD
                         The name of the thread to switch to on launch
   -m MODEL, --model MODEL

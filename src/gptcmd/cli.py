@@ -16,6 +16,7 @@ from typing import (
 
 import openai
 
+from .config import ConfigError, ConfigManager
 from .llm import (
     CompletionError,
     InvalidAPIParameterError,
@@ -63,9 +64,16 @@ class Gptcmd(cmd.Cmd):
         f"Welcome to Gptcmd {__version__}! Type help or ? to list commands.\n"
     )
 
-    def __init__(self, thread_cls=MessageThread, *args, **kwargs):
+    def __init__(
+        self,
+        thread_cls=MessageThread,
+        config: Optional[ConfigManager] = None,
+        *args,
+        **kwargs,
+    ):
         self.thread_cls = thread_cls
         self.last_path = None
+        self.config = config or ConfigManager.from_toml()
         self._llm = OpenAI(openai.OpenAI())
         self._detached = self.thread_cls("*detached*")
         self._current_thread = self._detached
@@ -944,6 +952,11 @@ def main():
         nargs="?",
     )
     parser.add_argument(
+        "-c",
+        "--config",
+        help="The path to a Gptcmd configuration file to use for this session",
+    )
+    parser.add_argument(
         "-t",
         "--thread",
         help="The name of the thread to switch to on launch",
@@ -960,7 +973,15 @@ def main():
     if args.version:
         print(f"Gptcmd {__version__}")
         return
-    shell = Gptcmd()
+    try:
+        if args.config:
+            config = ConfigManager.from_toml(args.config)
+        else:
+            config = None
+        shell = Gptcmd(config=config)
+    except ConfigError as e:
+        print(f"Couldn't read config: {e}")
+        sys.exit(1)
     if args.path:
         shell.do_load(args.path, _print_on_success=False)
     if args.thread:
