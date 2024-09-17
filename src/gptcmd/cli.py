@@ -341,7 +341,14 @@ class Gptcmd(cmd.Cmd):
                     " tokens used for this request"
                 )
 
-            show_cost = cost_info and self.config.conf["show_cost"]
+            show_cost = (
+                cost_info
+                and self.config.conf["show_cost"]
+                and (
+                    not self._session_cost_incomplete
+                    or self.config.conf["show_incomplete_cost"]
+                )
+            )
             show_token_usage = (
                 token_info and self.config.conf["show_token_usage"]
             )

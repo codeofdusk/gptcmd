@@ -15,6 +15,14 @@ prompt = "{thread}({model}) "
 # available, after each successful request.
 show_cost = true
 
+# Sometimes, such as when switching to a model that doesn't have cost
+# information available, cost estimation is unsupported.
+# Since these requests aren't counted in the session cost estimate, when
+# switching back to a scenario that does support cost estimation, the reported
+# estimated cost will be incomplete.
+# This option controls whether these incomplete estimates are displayed.
+show_incomplete_cost = false
+
 # This option controls whether the number of prompt (input) and sampled
 # (generated) tokens used for each request is displayed when available.
 show_token_usage = true
