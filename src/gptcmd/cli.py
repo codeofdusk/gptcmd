@@ -341,11 +341,16 @@ class Gptcmd(cmd.Cmd):
                     " tokens used for this request"
                 )
 
-            if cost_info and token_info:
+            show_cost = cost_info and self.config.conf["show_cost"]
+            show_token_usage = (
+                token_info and self.config.conf["show_token_usage"]
+            )
+
+            if show_cost and show_token_usage:
                 print(f"{cost_info} ({token_info})")
-            elif token_info:
+            elif show_token_usage:
                 print(token_info)
-            elif cost_info:
+            elif show_cost:
                 print(cost_info)
 
     def do_say(self, arg):
