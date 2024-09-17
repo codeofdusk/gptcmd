@@ -10,3 +10,11 @@ schema_version = "0.1.0"
 # Python escape sequences are supported.
 # Any other characters placed in this string are printed literally.
 prompt = "{thread}({model}) "
+
+# This option controls whether estimated session cost is displayed, when
+# available, after each successful request.
+show_cost = true
+
+# This option controls whether the number of prompt (input) and sampled
+# (generated) tokens used for each request is displayed when available.
+show_token_usage = true
