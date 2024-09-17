@@ -2,3 +2,11 @@
 
 # This option is used by the application for version tracking.
 schema_version = "0.1.0"
+
+# This option controls the formatting of the prompt.
+# The following keywords (when placed in braces) are replaced by:
+# model: the name of the active model
+# thread: the name of the active thread (if not the detached thread)
+# Python escape sequences are supported.
+# Any other characters placed in this string are printed literally.
+prompt = "{thread}({model}) "

@@ -89,7 +89,9 @@ class Gptcmd(cmd.Cmd):
             if self._current_thread == self._detached
             else self._current_thread.name
         )
-        return f"{threadname}({self._llm.model}) "
+        return self.config.conf["prompt"].format(
+            thread=threadname, model=self._llm.model
+        )
 
     @staticmethod
     def _fragment(tpl: str, msg: Message) -> str:
