@@ -2,6 +2,7 @@ import os
 import sys
 import platform
 import shutil
+from .llm import OpenAI
 from importlib import resources
 from typing import Dict, Optional
 
@@ -48,6 +49,7 @@ class ConfigManager:
 
         conf.update(config)
         self.conf = conf
+        self.accounts = self._configure_accounts(self.conf["accounts"])
 
     @classmethod
     def from_toml(cls, path: Optional[str] = None):
@@ -71,6 +73,24 @@ class ConfigManager:
                 return cls(tomllib.load(fin))
         except (FileNotFoundError, OSError, tomllib.TOMLDecodeError) as e:
             raise ConfigError(str(e)) from e
+
+    def _configure_accounts(self, account_config: Dict) -> Dict[str, OpenAI]:
+        res = {}
+        for name, conf in account_config.items():
+            res[name] = OpenAI.from_config(conf)
+        return res
+
+    @property
+    def default_account(self) -> OpenAI:
+        try:
+            return self.accounts.get(
+                "default",
+                next(
+                    iter(self.accounts.values())
+                ),  # The first configured account
+            )
+        except StopIteration:
+            raise ConfigError("No default account configured")
 
     @staticmethod
     def _get_config_root():

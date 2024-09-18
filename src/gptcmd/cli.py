@@ -14,15 +14,8 @@ from typing import (
     Tuple,
 )
 
-import openai
-
 from .config import ConfigError, ConfigManager
-from .llm import (
-    CompletionError,
-    InvalidAPIParameterError,
-    LLMProviderFeature,
-    OpenAI,
-)
+from .llm import CompletionError, InvalidAPIParameterError, LLMProviderFeature
 from .message import (
     Image,
     Message,
@@ -74,7 +67,7 @@ class Gptcmd(cmd.Cmd):
         self.thread_cls = thread_cls
         self.last_path = None
         self.config = config or ConfigManager.from_toml()
-        self._llm = OpenAI(openai.OpenAI())
+        self._llm = self.config.default_account
         self._detached = self.thread_cls("*detached*")
         self._current_thread = self._detached
         self._threads = {}

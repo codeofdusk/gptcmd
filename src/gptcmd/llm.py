@@ -101,6 +101,12 @@ class LLMProvider(ABC):
         """
         return ()
 
+    @classmethod
+    @abstractmethod
+    def from_config(cls, conf: Dict):
+        "Instantiate this object from a dict of configuration file parameters."
+        pass
+
     @property
     def api_params(self) -> Dict[str, Any]:
         return self._api_params.copy()
@@ -169,6 +175,14 @@ class OpenAI(LLMProvider):
         self._models = {m.id for m in self._client.models.list().data}
         super().__init__(*args, **kwargs)
         self.stream = True
+
+    @classmethod
+    def from_config(cls, conf: Dict):
+        SPECIAL_OPTS = ("model",)
+        model = conf.get("model")
+        client_opts = {k: v for k, v in conf.items() if k not in SPECIAL_OPTS}
+        client = openai.OpenAI(**client_opts)
+        return cls(client, model=model)
 
     def _message_to_openai(self, msg: Message) -> Dict[str, Any]:
         res = dataclasses.asdict(

@@ -26,3 +26,32 @@ show_incomplete_cost = false
 # This option controls whether the number of prompt (input) and sampled
 # (generated) tokens used for each request is displayed when available.
 show_token_usage = true
+
+# Account Configuration
+# The following sections configure Gptcmd's connections to OpenAI.
+# By default, Gptcmd uses the [accounts.default] section on startup.
+# If this section doesn't exist, Gptcmd uses the first account section it finds.
+# You can add multiple accounts by creating additional sections:
+# [accounts.first]
+# [accounts.second]
+# [accounts.custom_name]
+# Each account section should contain connection details similar to [accounts.default].
+
+# Within each account section (placed between its header and the next account's header), you can specify the following options:
+
+# model: The OpenAI model that Gptcmd should use when this account is activated.
+# Example:
+# model = "gpt-4o-mini"
+
+# api_key: The OpenAI API key to use. If omitted, Gptcmd reads it from the OPENAI_API_KEY environment variable.
+# Example:
+# api_key = "sk-xxxxxx"
+
+# base_url: The endpoint URL to which Gptcmd should connect.
+# With the "model" option, this option can be used to connect Gptcmd to third-party OpenAI-compatible APIs.
+# Example:
+# base_url = "https://openrouter.ai/api/v1"
+
+# Any additional options are passed directly to the Python OpenAI client's constructor for this account.
+
+[accounts.default]
