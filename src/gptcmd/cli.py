@@ -930,6 +930,26 @@ class Gptcmd(cmd.Cmd):
             print("Message doesn't exist")
             return
 
+    def do_account(self, arg):
+        "Switch between configured accounts."
+        if not arg:
+            active = None
+            others = []
+            for k, v in self.config.accounts.items():
+                if v == self._llm:
+                    active = k
+                else:
+                    others.append(k)
+            print(f"Active account: {active}")
+            if others:
+                print(f"Available accounts: {', '.join(others)}")
+            return
+        if arg in self.config.accounts:
+            self._llm = self.config.accounts[arg]
+            print(f"Switched to account {arg}")
+        else:
+            print(f"{arg} is not configured")
+
     def do_quit(self, arg):
         "Exit the program."
         warn = ""
