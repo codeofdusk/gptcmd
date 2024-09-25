@@ -255,11 +255,14 @@ class OpenAI(LLMProvider):
         try:
             resp = self._client.chat.completions.create(**kwargs)
         except openai.OpenAIError as e:
-            raise CompletionError(e.message) from e
+            raise CompletionError(str(e)) from e
         if isinstance(resp, openai.Stream):
             return StreamedOpenAIResponse(resp, self)
         if len(resp.choices) != 1:
-            return None
+            raise CompletionError(
+                f"Unexpected number of choices ({len(resp.choices)}) from"
+                " OpenAI response"
+            )
         choice = resp.choices[0]
         prompt_tokens = resp.usage.prompt_tokens
         sampled_tokens = resp.usage.completion_tokens
