@@ -1,19 +1,10 @@
 import argparse
 import cmd
 import json
-import openai
 import os
 import re
 import sys
-
 from ast import literal_eval
-from .llm import CompletionError, InvalidAPIParameterError, OpenAI
-from .message import (
-    Image,
-    Message,
-    MessageThread,
-    PopStickyMessageError,
-)
 from textwrap import shorten
 from typing import (
     Callable,
@@ -21,6 +12,16 @@ from typing import (
     List,
     Optional,
     Tuple,
+)
+
+import openai
+
+from .llm import CompletionError, InvalidAPIParameterError, OpenAI
+from .message import (
+    Image,
+    Message,
+    MessageThread,
+    PopStickyMessageError,
 )
 
 

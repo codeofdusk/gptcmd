@@ -1,7 +1,5 @@
 import dataclasses
 import inspect
-import openai
-
 from abc import ABC, abstractmethod
 from decimal import Decimal
 from typing import (
@@ -14,6 +12,8 @@ from typing import (
     Tuple,
     Type,
 )
+
+import openai
 
 from .message import Image, Message, MessageAttachment
 
