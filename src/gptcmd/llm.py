@@ -34,7 +34,7 @@ class LLMResponse:
     cost_in_cents: Optional[int] = None
 
     def __iter__(self):
-        "The default iterator for non-streaming LLMResponse objects."
+        """The default iterator for non-streaming LLMResponse objects."""
         yield self.message.content
 
 
