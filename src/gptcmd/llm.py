@@ -18,6 +18,7 @@ import openai
 
 from .message import Image, Message, MessageAttachment
 
+
 """
 This module contains the LLMProvider class and included implementations.
 Copyright 2024 Bill Dengler
@@ -178,7 +179,10 @@ class OpenAI(LLMProvider):
 
     @classmethod
     def from_config(cls, conf: Dict):
-        SPECIAL_OPTS = ("model",)
+        SPECIAL_OPTS = (
+            "model",
+            "provider",
+        )
         model = conf.get("model")
         client_opts = {k: v for k, v in conf.items() if k not in SPECIAL_OPTS}
         client = openai.OpenAI(**client_opts)

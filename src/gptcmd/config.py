@@ -2,14 +2,15 @@ import os
 import sys
 import platform
 import shutil
-from .llm import OpenAI
 from importlib import resources
-from typing import Dict, Optional
+from typing import Dict, Optional, Type
 
 if sys.version_info >= (3, 11):
     import tomllib
 else:
     import tomli as tomllib
+
+from .llm import LLMProvider, OpenAI
 
 
 """
@@ -22,6 +23,9 @@ file, You can obtain one at https://mozilla.org/MPL/2.0/.
 """
 
 
+DEFAULT_PROVIDERS: Dict[str, Type[LLMProvider]] = {"openai": OpenAI}
+
+
 class ConfigError(Exception):
     pass
 
@@ -29,7 +33,11 @@ class ConfigError(Exception):
 class ConfigManager:
     "Handles Gptcmd's configuration system."
 
-    def __init__(self, config: Dict):
+    def __init__(
+        self,
+        config: Dict,
+        providers: Dict[str, Type[LLMProvider]] = DEFAULT_PROVIDERS,
+    ):
         """
         Initialize the ConfigManager with a configuration dictionary.
         """
@@ -49,7 +57,9 @@ class ConfigManager:
 
         conf.update(config)
         self.conf = conf
-        self.accounts = self._configure_accounts(self.conf["accounts"])
+        self.accounts = self._configure_accounts(
+            self.conf["accounts"], providers
+        )
 
     @classmethod
     def from_toml(cls, path: Optional[str] = None):
@@ -74,14 +84,23 @@ class ConfigManager:
         except (FileNotFoundError, OSError, tomllib.TOMLDecodeError) as e:
             raise ConfigError(str(e)) from e
 
-    def _configure_accounts(self, account_config: Dict) -> Dict[str, OpenAI]:
+    def _configure_accounts(
+        self, account_config: Dict, providers: Dict[str, Type[LLMProvider]]
+    ) -> Dict[str, LLMProvider]:
         res = {}
         for name, conf in account_config.items():
-            res[name] = OpenAI.from_config(conf)
+            if "provider" not in conf:
+                raise ConfigError(f"Account {name} has no provider specified")
+            provider = providers.get(conf["provider"])
+            if not provider:
+                raise ConfigError(
+                    f"Provider {conf['provider']} is not available"
+                )
+            res[name] = provider.from_config(conf)
         return res
 
     @property
-    def default_account(self) -> OpenAI:
+    def default_account(self) -> LLMProvider:
         try:
             return self.accounts.get(
                 "default",
