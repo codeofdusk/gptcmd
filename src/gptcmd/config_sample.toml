@@ -1,7 +1,7 @@
 # Gptcmd configuration
 
 # This option is used by the application for version tracking.
-schema_version = "0.1.0"
+schema_version = "1.0.0"
 
 # This option controls the formatting of the prompt.
 # The following keywords (when placed in braces) are replaced by:
@@ -39,6 +39,8 @@ show_token_usage = true
 
 # Within each account section (placed between its header and the next account's header), you can specify the following options:
 
+# provider: This must be set to "openai".
+
 # model: The OpenAI model that Gptcmd should use when this account is activated.
 # Example:
 # model = "gpt-4o-mini"
@@ -55,3 +57,4 @@ show_token_usage = true
 # Any additional options are passed directly to the Python OpenAI client's constructor for this account.
 
 [accounts.default]
+provider="openai"
