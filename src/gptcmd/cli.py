@@ -16,7 +16,12 @@ from typing import (
 
 import openai
 
-from .llm import CompletionError, InvalidAPIParameterError, OpenAI
+from .llm import (
+    CompletionError,
+    InvalidAPIParameterError,
+    LLMProviderFeature,
+    OpenAI,
+)
 from .message import (
     Image,
     Message,
@@ -602,7 +607,10 @@ class Gptcmd(cmd.Cmd):
             for k, v in self._current_thread.names.items():
                 print(f"{k}: {v}")
             return
-        if not self._llm.supports_name:
+        if (
+            LLMProviderFeature.MESSAGE_NAME_FIELD
+            not in self._llm.supported_features
+        ):
             print("Name definition not supported")
             return
         t = arg.split()
@@ -623,7 +631,10 @@ class Gptcmd(cmd.Cmd):
         Clear the definition of a name. Pass no arguments to clear all
         names.
         """
-        if not self._llm.supports_name:
+        if (
+            LLMProviderFeature.MESSAGE_NAME_FIELD
+            not in self._llm.supported_features
+        ):
             print("Name definition not supported")
             return
         if not arg:
@@ -669,7 +680,10 @@ class Gptcmd(cmd.Cmd):
                 " <message range> [name]"
             )
             return
-        if not self._llm.supports_name:
+        if (
+            LLMProviderFeature.MESSAGE_NAME_FIELD
+            not in self._llm.supported_features
+        ):
             print("Name definition not supported")
             return
         role, ref, name = m.groups()

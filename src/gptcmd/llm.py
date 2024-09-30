@@ -2,6 +2,7 @@ import dataclasses
 import inspect
 from abc import ABC, abstractmethod
 from decimal import Decimal
+from enum import Flag, auto
 from typing import (
     Any,
     Callable,
@@ -46,13 +47,25 @@ class CompletionError(Exception):
     pass
 
 
+class LLMProviderFeature(Flag):
+    """
+    An enum representing optional features that an LLMProvider might
+    implement.
+    """
+
+    # Whether this LLM implements support for the name attribute
+    # on Message objects. If this flag is not set, message names are likely
+    # to be ignored.
+    MESSAGE_NAME_FIELD = auto()
+
+
 class LLMProvider(ABC):
     """
     An object which generates the most likely next Message
     given a sequence of Messages.
     """
 
-    supports_name = False
+    supported_features: LLMProviderFeature = LLMProviderFeature(0)
 
     def __init__(self, model: Optional[str] = None):
         self.model: Optional[str] = model or self.get_best_model()
@@ -146,7 +159,7 @@ class LLMProvider(ABC):
 
 
 class OpenAI(LLMProvider):
-    supports_name = True
+    supported_features = LLMProviderFeature.MESSAGE_NAME_FIELD
 
     def __init__(self, client, *args, **kwargs):
         self._client = client
