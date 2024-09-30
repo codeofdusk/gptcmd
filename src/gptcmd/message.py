@@ -3,7 +3,19 @@ import dataclasses
 import mimetypes
 from abc import ABC, abstractmethod
 from collections.abc import Sequence
-from typing import Any, ClassVar, Dict, Iterable, Optional, List, Tuple, Type
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Generic,
+    Iterable,
+    List,
+    Optional,
+    Tuple,
+    Type,
+    TypeVar,
+)
+
 
 """
 This module contains classes and types for interacting with messages and
@@ -15,19 +27,66 @@ file, You can obtain one at https://mozilla.org/MPL/2.0/.
 """
 
 
+T = TypeVar("T")
+
+
+class TwoWayRegistrar(Generic[T]):
+    """
+    A registrar that maintains both forward and reverse mappings between keys
+    and classes.
+    Ensures a one-to-one relationship and provides reverse lookup.
+    """
+
+    def __init__(self):
+        self._registry: Dict[str, Type[T]] = {}
+        self._reverse_registry: Dict[Type[T], str] = {}
+
+    def __contains__(self, key: str) -> bool:
+        return key in self._registry
+
+    def register(self, key: str) -> Callable[[Type[T]], Type[T]]:
+        """
+        Decorator to register a class with the passed-in key.
+        """
+
+        def decorator(cls: Type[T]) -> Type[T]:
+            if key in self._registry:
+                raise ValueError(f"{key} is already registered")
+            elif cls in self._reverse_registry:
+                raise ValueError(f"{cls} is already registered")
+            self._registry[key] = cls
+            self._reverse_registry[cls] = key
+            return cls
+
+        return decorator
+
+    def get(self, key: str) -> Type[T]:
+        """
+        Retrieve a class from the registry by key.
+        """
+        if key not in self._registry:
+            raise KeyError(f"{key} is not registered")
+        return self._registry[key]
+
+    def reverse_get(self, cls: Type[T]) -> str:
+        """
+        Retrieve the key associated with a class from the reverse registry.
+        """
+        if cls not in self._reverse_registry:
+            raise KeyError(f"Class '{cls.__name__}' is not registered")
+        return self._reverse_registry[cls]
+
+
+attachment_type_registrar: TwoWayRegistrar["MessageAttachment"] = (
+    TwoWayRegistrar()
+)
+
+
 class MessageAttachment(ABC):
     """
     A non-text component that can be associated with a Message, such as an
     image for vision models.
     """
-
-    _type_registry: Dict[str, Type["MessageAttachment"]] = {}
-    type: ClassVar[str]
-
-    @classmethod
-    def __init_subclass__(cls, **kwargs):
-        super().__init_subclass__(**kwargs)
-        cls._type_registry[cls.type] = cls
 
     @classmethod
     def from_dict(cls, d: Dict[str, Any]) -> "MessageAttachment":
@@ -36,12 +95,9 @@ class MessageAttachment(ABC):
         MessageAttachment.to_dict()
         """
         attachment_type = d.get("type")
-        if attachment_type in cls._type_registry:
-            return cls._type_registry[attachment_type]._deserialize(
-                d.get("data", {})
-            )
-        else:
-            raise ValueError(f"Unrecognized type: {attachment_type}")
+        return attachment_type_registrar.get(attachment_type)._deserialize(
+            d.get("data", {})
+        )
 
     @classmethod
     @abstractmethod
@@ -51,7 +107,10 @@ class MessageAttachment(ABC):
 
     def to_dict(self) -> Dict[str, Any]:
         "Exports this attachment as a serializable dict"
-        return {"type": self.__class__.type, "data": self._serialize()}
+        return {
+            "type": attachment_type_registrar.reverse_get(self.__class__),
+            "data": self._serialize(),
+        }
 
     @abstractmethod
     def _serialize(self) -> Dict[str, Any]:
@@ -62,10 +121,9 @@ class MessageAttachment(ABC):
         return self.to_dict() == other.to_dict()
 
 
+@attachment_type_registrar.register("image_url")
 class Image(MessageAttachment):
     "An image reachable by URL that can be fetched by the LLM API."
-
-    type = "image_url"
 
     def __init__(self, url: str, detail: Optional[str] = None):
         self.url = url
