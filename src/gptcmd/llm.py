@@ -149,9 +149,12 @@ class LLMProvider(ABC):
     def format_attachment(
         self, attachment: MessageAttachment
     ) -> Dict[str, Any]:
-        formatter = self._attachment_formatters.get(type(attachment))
-        if formatter:
-            return formatter(attachment)
+        for cls in self.__class__.__mro__:
+            formatter = getattr(cls, "_attachment_formatters", {}).get(
+                type(attachment)
+            )
+            if formatter:
+                return formatter(attachment)
         raise ValueError(
             f"{type(attachment).__name__} attachments aren't supported by"
             " this LLM"
