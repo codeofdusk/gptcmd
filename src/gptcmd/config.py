@@ -10,7 +10,7 @@ if sys.version_info >= (3, 11):
 else:
     import tomli as tomllib
 
-from .llm import LLMProvider, OpenAI
+from .llm import AzureAI, LLMProvider, OpenAI
 
 
 """
@@ -23,7 +23,10 @@ file, You can obtain one at https://mozilla.org/MPL/2.0/.
 """
 
 
-DEFAULT_PROVIDERS: Dict[str, Type[LLMProvider]] = {"openai": OpenAI}
+DEFAULT_PROVIDERS: Dict[str, Type[LLMProvider]] = {
+    "openai": OpenAI,
+    "azure": AzureAI,
+}
 
 
 class ConfigError(Exception):

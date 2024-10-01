@@ -316,8 +316,8 @@ class OpenAI(LLMProvider):
         choice = resp.choices[0]
         prompt_tokens = resp.usage.prompt_tokens
         cached_prompt_tokens = dict(
-            resp.usage.prompt_tokens_details.get("cached_tokens", 0)
-        )
+            getattr(resp.usage, "prompt_tokens_details", {})
+        ).get("cached_tokens", 0)
         sampled_tokens = resp.usage.completion_tokens
 
         return LLMResponse(
@@ -373,6 +373,26 @@ class OpenAI(LLMProvider):
             return res
 
 
+class AzureAI(OpenAI):
+    AZURE_API_VERSION = "2024-06-01"
+
+    @classmethod
+    def from_config(cls, conf):
+        SPECIAL_OPTS = (
+            "model",
+            "provider",
+            "api_version",
+        )
+        model = conf.get("model")
+        client_opts = {k: v for k, v in conf.items() if k not in SPECIAL_OPTS}
+        client_opts["api_version"] = cls.AZURE_API_VERSION
+        endpoint = client_opts.pop("endpoint", None)
+        if endpoint:
+            client_opts["azure_endpoint"] = endpoint
+        client = openai.AzureOpenAI(**client_opts)
+        return cls(client, model=model)
+
+
 @OpenAI.register_attachment_formatter(Image)
 def format_image_for_openai(img: Image) -> Dict[str, Any]:
     res = {"type": "image_url", "image_url": {"url": img.url}}
@@ -397,8 +417,8 @@ class StreamedOpenAIResponse(LLMResponse):
         if chunk.usage:
             prompt_tokens = chunk.usage.prompt_tokens
             cached_prompt_tokens = dict(
-                chunk.usage.prompt_tokens_details.get("cached_tokens", 0)
-            )
+                getattr(chunk.usage, "prompt_tokens_details", {})
+            ).get("cached_tokens", 0)
             sampled_tokens = chunk.usage.completion_tokens
             self.prompt_tokens = prompt_tokens
             self.sampled_tokens = sampled_tokens

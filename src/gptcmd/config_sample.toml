@@ -28,7 +28,7 @@ show_incomplete_cost = false
 show_token_usage = true
 
 # Account Configuration
-# The following sections configure Gptcmd's connections to OpenAI.
+# The following sections configure Gptcmd's connections to large language model provider accounts.
 # By default, Gptcmd uses the [accounts.default] section on startup.
 # If this section doesn't exist, Gptcmd uses the first account section it finds.
 # You can add multiple accounts by creating additional sections:
@@ -39,17 +39,23 @@ show_token_usage = true
 
 # Within each account section (placed between its header and the next account's header), you can specify the following options:
 
-# provider: This must be set to "openai".
+# provider: Specifies the large language model provider; must be either "openai" or "azure".
+# Example:
+# provider = "openai"
 
-# model: The OpenAI model that Gptcmd should use when this account is activated.
+# model: The OpenAI model or Azure deployment Gptcmd should use when this account is activated.
 # Example:
 # model = "gpt-4o-mini"
 
-# api_key: The OpenAI API key to use. If omitted, Gptcmd reads it from the OPENAI_API_KEY environment variable.
+# endpoint: For Azure accounts, the Azure endpoint URL.
+# Example:
+# endpoint = "https://contoso.openai.azure.com/"
+
+# api_key: The API key to use. If omitted, Gptcmd reads it from the OPENAI_API_KEY (for OpenAI accounts) or AZURE_OPENAI_API_KEY (for Azure accounts) environment variable.
 # Example:
 # api_key = "sk-xxxxxx"
 
-# base_url: The endpoint URL to which Gptcmd should connect.
+# base_url: For OpenAI accounts, the endpoint URL to which Gptcmd should connect.
 # With the "model" option, this option can be used to connect Gptcmd to third-party OpenAI-compatible APIs.
 # Example:
 # base_url = "https://openrouter.ai/api/v1"
