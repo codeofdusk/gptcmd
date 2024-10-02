@@ -188,7 +188,10 @@ class OpenAI(LLMProvider):
 
     @staticmethod
     def _estimate_cost_in_cents(
-        model: str, prompt_tokens: int, sampled_tokens: int
+        model: str,
+        prompt_tokens: int,
+        cached_prompt_tokens: int,
+        sampled_tokens: int,
     ) -> Optional[Decimal]:
         COST_PER_PROMPT_SAMPLED: Dict[str, Tuple[Decimal, Decimal]] = {
             "o1-preview-2024-09-12": (
@@ -253,11 +256,16 @@ class OpenAI(LLMProvider):
             ),
         }
 
+        CACHE_DISCOUNT_FACTOR: Decimal = Decimal("0.5")
+
         if model not in COST_PER_PROMPT_SAMPLED:
             return None
         prompt_scale, sampled_scale = COST_PER_PROMPT_SAMPLED[model]
+        cached_prompt_scale = prompt_scale * CACHE_DISCOUNT_FACTOR
+        uncached_prompt_tokens = prompt_tokens - cached_prompt_tokens
         return (
-            Decimal(prompt_tokens) * prompt_scale
+            Decimal(uncached_prompt_tokens) * prompt_scale
+            + Decimal(cached_prompt_tokens) * cached_prompt_scale
             + Decimal(sampled_tokens) * sampled_scale
         ) * Decimal("100")
 
@@ -289,6 +297,9 @@ class OpenAI(LLMProvider):
             )
         choice = resp.choices[0]
         prompt_tokens = resp.usage.prompt_tokens
+        cached_prompt_tokens = dict(
+            resp.usage.prompt_tokens_details.get("cached_tokens", 0)
+        )
         sampled_tokens = resp.usage.completion_tokens
 
         return LLMResponse(
@@ -300,6 +311,7 @@ class OpenAI(LLMProvider):
             cost_in_cents=self.__class__._estimate_cost_in_cents(
                 model=resp.model,
                 prompt_tokens=prompt_tokens,
+                cached_prompt_tokens=cached_prompt_tokens,
                 sampled_tokens=sampled_tokens,
             ),
         )
@@ -366,6 +378,9 @@ class StreamedOpenAIResponse(LLMResponse):
         chunk = next(self._stream)
         if chunk.usage:
             prompt_tokens = chunk.usage.prompt_tokens
+            cached_prompt_tokens = dict(
+                chunk.usage.prompt_tokens_details.get("cached_tokens", 0)
+            )
             sampled_tokens = chunk.usage.completion_tokens
             self.prompt_tokens = prompt_tokens
             self.sampled_tokens = sampled_tokens
@@ -373,6 +388,7 @@ class StreamedOpenAIResponse(LLMResponse):
                 self._provider.__class__._estimate_cost_in_cents(
                     model=chunk.model,
                     prompt_tokens=prompt_tokens,
+                    cached_prompt_tokens=cached_prompt_tokens,
                     sampled_tokens=sampled_tokens,
                 )
             )
