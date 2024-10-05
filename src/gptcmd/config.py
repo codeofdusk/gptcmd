@@ -5,6 +5,11 @@ import shutil
 from importlib import resources
 from typing import Dict, Optional, Type
 
+if sys.version_info >= (3, 8):
+    from importlib.metadata import entry_points
+else:
+    from importlib_metadata import entry_points
+
 if sys.version_info >= (3, 11):
     import tomllib
 else:
@@ -40,7 +45,7 @@ class ConfigManager:
     def __init__(
         self,
         config: Dict,
-        providers: Dict[str, Type[LLMProvider]] = DEFAULT_PROVIDERS,
+        providers: Optional[Dict[str, Type[LLMProvider]]] = None,
     ):
         """
         Initialize the ConfigManager with a configuration dictionary.
@@ -61,9 +66,45 @@ class ConfigManager:
 
         conf.update(config)
         self.conf = conf
+        if providers is None:
+            providers = self.__class__._discover_external_providers(
+                initial_providers=DEFAULT_PROVIDERS
+            )
         self.accounts = self._configure_accounts(
             self.conf["accounts"], providers
         )
+
+    @staticmethod
+    def _discover_external_providers(
+        initial_providers: Optional[Dict[str, Type[LLMProvider]]] = None,
+    ) -> Dict[str, Type[LLMProvider]]:
+        """
+        Discover external providers registered via entry points.
+        """
+        res: Dict[str, Type[LLMProvider]] = {}
+        if initial_providers:
+            res.update(initial_providers)
+        eps = entry_points()
+        ENTRY_POINT_GROUP = "gptcmd.providers"
+        if hasattr(eps, "select"):
+            selected_eps = eps.select(group=ENTRY_POINT_GROUP)
+        else:
+            selected_eps = eps.get(ENTRY_POINT_GROUP, ())
+        for ep in selected_eps:
+            provider_cls = ep.load()
+            if ep.name in res:
+
+                def fully_qualified_name(cls):
+                    return cls.__module__ + "." + cls.__qualname__
+
+                raise ConfigError(
+                    f"Duplicate registration for {ep.name}:"
+                    f" {fully_qualified_name(res[ep.name])} and"
+                    f" {fully_qualified_name(provider_cls)}"
+                )
+            else:
+                res[ep.name] = provider_cls
+        return res
 
     @classmethod
     def from_toml(cls, path: Optional[str] = None):
@@ -98,7 +139,8 @@ class ConfigManager:
             provider = providers.get(conf["provider"])
             if not provider:
                 raise ConfigError(
-                    f"Provider {conf['provider']} is not available"
+                    f"Provider {conf['provider']} is not available. Perhaps"
+                    " you need to install it?"
                 )
             res[name] = provider.from_config(conf)
         return res
