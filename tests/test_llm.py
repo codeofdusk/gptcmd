@@ -2,10 +2,14 @@ import unittest
 
 from gptcmd.llm import InvalidAPIParameterError, LLMProvider, LLMResponse
 from gptcmd.message import Message
-from typing import Sequence
+from typing import Dict, Sequence
 
 
 class CactusProvider(LLMProvider):
+    @classmethod
+    def from_config(cls, conf: Dict):
+        return cls(**conf)
+
     def complete(self, messages: Sequence[Message]) -> LLMResponse:
         return LLMResponse(Message(content="Cactus cactus!", role="assistant"))
 

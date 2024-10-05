@@ -10,7 +10,8 @@ if sys.version_info >= (3, 11):
 else:
     import tomli as tomllib
 
-from .llm import AzureAI, LLMProvider, OpenAI
+from .llm import LLMProvider
+from .llm.openai import AzureAI, OpenAI
 
 
 """
