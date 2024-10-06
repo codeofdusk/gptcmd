@@ -964,11 +964,10 @@ class Gptcmd(cmd.Cmd):
             )
         else:
             can_exit = True
-        if can_exit:
-            sys.exit(0)
+        return can_exit  # Truthy return values cause the cmdloop to stop
 
 
-def main():
+def main() -> bool:
     """
     Setuptools requires a callable entry point to build an installable script
     """
@@ -999,7 +998,7 @@ def main():
     args = parser.parse_args()
     if args.version:
         print(f"Gptcmd {__version__}")
-        return
+        return True
     try:
         if args.config:
             config = ConfigManager.from_toml(args.config)
@@ -1008,7 +1007,7 @@ def main():
         shell = Gptcmd(config=config)
     except ConfigError as e:
         print(f"Couldn't read config: {e}")
-        sys.exit(1)
+        return False
     if args.path:
         shell.do_load(args.path, _print_on_success=False)
     if args.thread:
@@ -1016,7 +1015,12 @@ def main():
     if args.model:
         shell.do_model(args.model, _print_on_success=False)
     shell.cmdloop()
+    return True
 
 
 if __name__ == "__main__":
-    main()
+    success = main()
+    if success:
+        sys.exit(0)
+    else:
+        sys.exit(1)
