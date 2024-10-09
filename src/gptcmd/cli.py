@@ -574,7 +574,6 @@ class Gptcmd(cmd.Cmd):
             # changes.
             "temperature",
             "top_p",
-            "n",
             "stop",
             "max_tokens",
             "presence_penalty",
@@ -606,9 +605,7 @@ class Gptcmd(cmd.Cmd):
             print(e)
 
     def complete_unset(self, text, line, begidx, endidx):
-        return self.__class__._complete_from_key(
-            self._current_thread.api_params, text
-        )
+        return self.__class__._complete_from_key(self._llm.api_params, text)
 
     def do_stream(self, arg):
         """
@@ -641,7 +638,10 @@ class Gptcmd(cmd.Cmd):
             return
         t = arg.split()
         if len(t) != 2 or not self.__class__._validate_role(t[0]):
-            print(f"Usage: name <{'|'.join(self.__class__.KNOWN_ROLES)}> <new name>")
+            print(
+                f"Usage: name <{'|'.join(self.__class__.KNOWN_ROLES)}> <new"
+                " name>"
+            )
             return
         role = MessageRole(t[0])
         name = " ".join(t[1:])
@@ -960,6 +960,9 @@ class Gptcmd(cmd.Cmd):
             print(f"Switched to account {arg}")
         else:
             print(f"{arg} is not configured")
+
+    def complete_account(self, text, line, begidx, endidx):
+        return self.__class__._complete_from_key(self.config.accounts, text)
 
     def do_quit(self, arg):
         "Exit the program."
