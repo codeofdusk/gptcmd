@@ -641,7 +641,7 @@ class Gptcmd(cmd.Cmd):
             return
         t = arg.split()
         if len(t) != 2 or not self.__class__._validate_role(t[0]):
-            print("Usage: name <user|assistant|system> <new name>")
+            print(f"Usage: name <{'|'.join(self.__class__.KNOWN_ROLES)}> <new name>")
             return
         role = MessageRole(t[0])
         name = " ".join(t[1:])
