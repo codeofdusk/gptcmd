@@ -19,6 +19,7 @@ from .llm import CompletionError, InvalidAPIParameterError, LLMProviderFeature
 from .message import (
     Image,
     Message,
+    MessageRole,
     MessageThread,
     PopStickyMessageError,
 )
@@ -145,7 +146,7 @@ class Gptcmd(cmd.Cmd):
     def _complete_from_key(d: Dict, text: str) -> List[str]:
         return [k for k, v in d.items() if k.startswith(text)]
 
-    KNOWN_ROLES = ("user", "assistant", "system")
+    KNOWN_ROLES = tuple(MessageRole)
 
     @classmethod
     def _complete_role(cls, text: str) -> List[str]:
@@ -224,7 +225,9 @@ class Gptcmd(cmd.Cmd):
         current thread.
         example: "user Hello, world!"
         """
-        self._current_thread.append(Message(content=arg, role="user"))
+        self._current_thread.append(
+            Message(content=arg, role=MessageRole.USER)
+        )
         print("OK")
 
     def do_assistant(self, arg):
@@ -233,7 +236,9 @@ class Gptcmd(cmd.Cmd):
         the current thread.
         example: "assistant how can I help?"
         """
-        self._current_thread.append(Message(content=arg, role="assistant"))
+        self._current_thread.append(
+            Message(content=arg, role=MessageRole.ASSISTANT)
+        )
         print("OK")
 
     def do_system(self, arg):
@@ -242,7 +247,9 @@ class Gptcmd(cmd.Cmd):
         the current thread.
         example: "system You are a friendly assistant."
         """
-        self._current_thread.append(Message(content=arg, role="system"))
+        self._current_thread.append(
+            Message(content=arg, role=MessageRole.SYSTEM)
+        )
         print("OK")
 
     def do_first(self, arg):
@@ -360,7 +367,9 @@ class Gptcmd(cmd.Cmd):
         the response.
         example: "say Hello!"
         """
-        self._current_thread.append(Message(content=arg, role="user"))
+        self._current_thread.append(
+            Message(content=arg, role=MessageRole.USER)
+        )
         self.do_send(None)
 
     def do_pop(self, arg):
@@ -484,7 +493,9 @@ class Gptcmd(cmd.Cmd):
         Resend up through the last non-assistant, non-sticky message to the
         language model. This command takes no arguments.
         """
-        if not any(m.role != "assistant" for m in self._current_thread):
+        if not any(
+            m.role != MessageRole.ASSISTANT for m in self._current_thread
+        ):
             print("Nothing to retry!")
             return
         if self._current_thread != self._detached:
@@ -503,7 +514,7 @@ class Gptcmd(cmd.Cmd):
             while basename + str(num) in self._threads:
                 num += 1
             self.do_thread(basename + str(num))
-        while self._current_thread[-1].role == "assistant":
+        while self._current_thread[-1].role == MessageRole.ASSISTANT:
             try:
                 self._current_thread.pop()
             except PopStickyMessageError:
@@ -632,7 +643,7 @@ class Gptcmd(cmd.Cmd):
         if len(t) != 2 or not self.__class__._validate_role(t[0]):
             print("Usage: name <user|assistant|system> <new name>")
             return
-        role = t[0]
+        role = MessageRole(t[0])
         name = " ".join(t[1:])
         self._current_thread.names[role] = name
         print(f"{role} set to {name!r}")
@@ -834,7 +845,7 @@ class Gptcmd(cmd.Cmd):
             )
             return
         path = " ".join(args[:-1])
-        role = args[-1]
+        role = MessageRole(args[-1])
         try:
             with open(path, encoding="utf-8", errors="ignore") as fin:
                 msg = Message(content=fin.read(), role=role)

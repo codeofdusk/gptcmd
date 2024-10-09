@@ -1,6 +1,11 @@
 import unittest
-from gptcmd import MessageThread, Message, PopStickyMessageError
-from gptcmd.message import Image
+from gptcmd.message import (
+    Image,
+    Message,
+    MessageRole,
+    MessageThread,
+    PopStickyMessageError,
+)
 
 """
 This module contains unit tests for MessageThread and related objects.
@@ -20,8 +25,8 @@ class TestMessageThreadInit(unittest.TestCase):
 
     def test_init_with_messages(self):
         messages = [
-            Message(content="Hello", role="user"),
-            Message(content="Hi", role="assistant"),
+            Message(content="Hello", role=MessageRole.USER),
+            Message(content="Hi", role=MessageRole.ASSISTANT),
         ]
         thread = MessageThread(name="test", messages=messages)
         self.assertEqual(len(thread), 2)
@@ -29,7 +34,7 @@ class TestMessageThreadInit(unittest.TestCase):
         self.assertEqual(thread[1].content, "Hi")
 
     def test_init_with_names(self):
-        names = {"user": "Alice", "assistant": "Mila"}
+        names = {MessageRole.USER: "Alice", MessageRole.ASSISTANT: "Mila"}
         thread = MessageThread(name="test", names=names)
         self.assertEqual(thread.names, names)
 
@@ -39,21 +44,23 @@ class TestMessageThread(unittest.TestCase):
         self.thread = MessageThread(name="test")
 
     def test_append(self):
-        self.thread.append(Message(content="Hello", role="user"))
+        self.thread.append(Message(content="Hello", role=MessageRole.USER))
         self.assertEqual(len(self.thread), 1)
         self.assertEqual(self.thread[0].content, "Hello")
-        self.assertEqual(self.thread[0].role, "user")
+        self.assertEqual(self.thread[0].role, MessageRole.USER)
         self.assertTrue(self.thread.dirty)
 
     def test_render(self):
-        self.thread.append(Message(content="What is a cactus?", role="user"))
+        self.thread.append(
+            Message(content="What is a cactus?", role=MessageRole.USER)
+        )
         self.thread.append(
             Message(
                 content=(
                     "A desert plant with thick, fleshy stems, sharp spines,"
                     " and beautiful, short-lived flowers."
                 ),
-                role="assistant",
+                role=MessageRole.ASSISTANT,
             )
         )
         self.assertEqual(
@@ -63,15 +70,20 @@ class TestMessageThread(unittest.TestCase):
         )
 
     def test_render_custom_names(self):
-        self.thread.names = {"user": "Bill", "assistant": "Kevin"}
-        self.thread.append(Message(content="What is a cactus?", role="user"))
+        self.thread.names = {
+            MessageRole.USER: "Bill",
+            MessageRole.ASSISTANT: "Kevin",
+        }
+        self.thread.append(
+            Message(content="What is a cactus?", role=MessageRole.USER)
+        )
         self.thread.append(
             Message(
                 content=(
                     "A desert plant with thick, fleshy stems, sharp spines,"
                     " and beautiful, short-lived flowers."
                 ),
-                role="assistant",
+                role=MessageRole.ASSISTANT,
             )
         )
         self.assertEqual(
@@ -81,56 +93,60 @@ class TestMessageThread(unittest.TestCase):
         )
 
     def test_pop(self):
-        self.thread.append(Message(content="Hello", role="user"))
-        self.thread.append(Message(content="Hi", role="assistant"))
+        self.thread.append(Message(content="Hello", role=MessageRole.USER))
+        self.thread.append(Message(content="Hi", role=MessageRole.ASSISTANT))
         popped = self.thread.pop()
         self.assertEqual(len(self.thread), 1)
         self.assertEqual(popped.content, "Hi")
-        self.assertEqual(popped.role, "assistant")
+        self.assertEqual(popped.role, MessageRole.ASSISTANT)
         self.thread.pop()
         with self.assertRaises(IndexError):
             self.thread.pop()
 
     def test_pop_sticky(self):
-        self.thread.append(Message(content="Hello", role="user", _sticky=True))
+        self.thread.append(
+            Message(content="Hello", role=MessageRole.USER, _sticky=True)
+        )
         with self.assertRaises(PopStickyMessageError):
             self.thread.pop()
 
     def test_clear(self):
-        self.thread.append(Message(content="Hello", role="user"))
-        self.thread.append(Message(content="Hi", role="assistant"))
+        self.thread.append(Message(content="Hello", role=MessageRole.USER))
+        self.thread.append(Message(content="Hi", role=MessageRole.ASSISTANT))
         self.thread.clear()
         self.assertEqual(len(self.thread), 0)
 
     def test_clear_sticky(self):
-        self.thread.append(Message(content="Hello", role="user", _sticky=True))
-        self.thread.append(Message(content="Hi", role="assistant"))
+        self.thread.append(
+            Message(content="Hello", role=MessageRole.USER, _sticky=True)
+        )
+        self.thread.append(Message(content="Hi", role=MessageRole.ASSISTANT))
         self.thread.clear()
         self.assertEqual(len(self.thread), 1)
 
     def test_flip(self):
-        self.thread.append(Message(content="Hello", role="user"))
-        self.thread.append(Message(content="Hi", role="assistant"))
+        self.thread.append(Message(content="Hello", role=MessageRole.USER))
+        self.thread.append(Message(content="Hi", role=MessageRole.ASSISTANT))
         flipped = self.thread.flip()
         self.assertEqual(flipped.content, "Hi")
         self.assertEqual(self.thread[0].content, "Hi")
-        self.assertEqual(self.thread[0].role, "assistant")
+        self.assertEqual(self.thread[0].role, MessageRole.ASSISTANT)
         self.assertEqual(self.thread[1].content, "Hello")
-        self.assertEqual(self.thread[1].role, "user")
+        self.assertEqual(self.thread[1].role, MessageRole.USER)
 
     def test_rename(self):
-        self.thread.append(Message(content="Hello", role="user"))
-        self.thread.append(Message(content="Hi", role="assistant"))
-        self.thread.rename(role="assistant", name="GPT")
+        self.thread.append(Message(content="Hello", role=MessageRole.USER))
+        self.thread.append(Message(content="Hi", role=MessageRole.ASSISTANT))
+        self.thread.rename(role=MessageRole.ASSISTANT, name="GPT")
         self.assertEqual(self.thread[1].name, "GPT")
 
     def test_rename_limited_range(self):
-        self.thread.append(Message(content="abc", role="user"))
-        self.thread.append(Message(content="def", role="assistant"))
-        self.thread.append(Message(content="ghi", role="user"))
-        self.thread.append(Message(content="jkl", role="user"))
+        self.thread.append(Message(content="abc", role=MessageRole.USER))
+        self.thread.append(Message(content="def", role=MessageRole.ASSISTANT))
+        self.thread.append(Message(content="ghi", role=MessageRole.USER))
+        self.thread.append(Message(content="jkl", role=MessageRole.USER))
         self.thread.rename(
-            role="user", name="Kevin", start_index=0, end_index=2
+            role=MessageRole.USER, name="Kevin", start_index=0, end_index=2
         )
         self.assertEqual(self.thread[0].name, "Kevin")
         self.assertIsNone(self.thread[1].name)
@@ -138,15 +154,15 @@ class TestMessageThread(unittest.TestCase):
         self.assertIsNone(self.thread[3].name)
 
     def test_sticky(self):
-        self.thread.append(Message(content="Hello", role="user"))
-        self.thread.append(Message(content="Hi", role="assistant"))
+        self.thread.append(Message(content="Hello", role=MessageRole.USER))
+        self.thread.append(Message(content="Hi", role=MessageRole.ASSISTANT))
         self.thread.sticky(0, 1, True)
         self.assertTrue(self.thread[0]._sticky)
         self.assertFalse(self.thread[1]._sticky)
 
     def test_messages_property(self):
-        self.thread.append(Message(content="Hello", role="user"))
-        self.thread.append(Message(content="Hi", role="assistant"))
+        self.thread.append(Message(content="Hello", role=MessageRole.USER))
+        self.thread.append(Message(content="Hi", role=MessageRole.ASSISTANT))
         messages = self.thread.messages
         self.assertIsInstance(messages, tuple)
         self.assertEqual(len(messages), 2)
@@ -154,8 +170,8 @@ class TestMessageThread(unittest.TestCase):
         self.assertEqual(messages[1].content, "Hi")
 
     def test_to_dict(self):
-        self.thread.append(Message(content="Hello", role="user"))
-        self.thread.append(Message(content="Hi", role="assistant"))
+        self.thread.append(Message(content="Hello", role=MessageRole.USER))
+        self.thread.append(Message(content="Hi", role=MessageRole.ASSISTANT))
         thread_dict = self.thread.to_dict()
         self.assertIn("messages", thread_dict)
         self.assertIn("names", thread_dict)
@@ -173,15 +189,20 @@ class TestMessageThread(unittest.TestCase):
         self.assertEqual(thread.name, "test")
         self.assertEqual(len(thread), 2)
         self.assertEqual(thread[0].content, "Hello")
+        self.assertEqual(thread[0].role, MessageRole.USER)
         self.assertEqual(thread[1].content, "Hi")
-        self.assertEqual(thread.names, {"user": "Alice", "assistant": "Mila"})
+        self.assertEqual(thread[1].role, MessageRole.ASSISTANT)
+        self.assertEqual(
+            thread.names,
+            {MessageRole.USER: "Alice", MessageRole.ASSISTANT: "Mila"},
+        )
 
 
 class TestMessage(unittest.TestCase):
     def test_message_creation(self):
-        message = Message(content="Hello", role="user")
+        message = Message(content="Hello", role=MessageRole.USER)
         self.assertEqual(message.content, "Hello")
-        self.assertEqual(message.role, "user")
+        self.assertEqual(message.role, MessageRole.USER)
         self.assertIsNone(message.name)
         self.assertFalse(message._sticky)
         self.assertEqual(message._attachments, [])
@@ -189,16 +210,18 @@ class TestMessage(unittest.TestCase):
     def test_message_with_attachment(self):
         image = Image(url="http://example.com/image.jpg")
         message = Message(
-            content="What's in this image?", role="user", _attachments=[image]
+            content="What's in this image?",
+            role=MessageRole.USER,
+            _attachments=[image],
         )
         self.assertEqual(len(message._attachments), 1)
         self.assertIsInstance(message._attachments[0], Image)
 
     def test_message_to_dict(self):
-        message = Message(content="Hello", role="user", name="Bill")
+        message = Message(content="Hello", role=MessageRole.USER, name="Bill")
         message_dict = message.to_dict()
         self.assertEqual(message_dict["content"], "Hello")
-        self.assertEqual(message_dict["role"], "user")
+        self.assertEqual(message_dict["role"], MessageRole.USER)
         self.assertEqual(message_dict["name"], "Bill")
 
     def test_message_from_dict(self):
@@ -216,7 +239,7 @@ class TestMessage(unittest.TestCase):
         }
         message = Message.from_dict(message_dict)
         self.assertEqual(message.content, "Hello")
-        self.assertEqual(message.role, "user")
+        self.assertEqual(message.role, MessageRole.USER)
         self.assertEqual(message.name, "Bill")
         self.assertTrue(message._sticky)
         self.assertEqual(len(message._attachments), 1)

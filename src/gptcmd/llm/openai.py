@@ -11,7 +11,7 @@ from . import (
     LLMProvider,
     LLMResponse,
 )
-from ..message import Image, Message
+from ..message import Image, Message, MessageRole
 
 import openai
 
@@ -179,7 +179,8 @@ class OpenAI(LLMProvider):
 
         return LLMResponse(
             message=Message(
-                content=choice.message.content, role=choice.message.role
+                content=choice.message.content,
+                role=MessageRole(choice.message.role),
             ),
             prompt_tokens=prompt_tokens,
             sampled_tokens=sampled_tokens,
