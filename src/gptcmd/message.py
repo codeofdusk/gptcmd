@@ -1,6 +1,7 @@
 import base64
 import dataclasses
 import mimetypes
+import sys
 from abc import ABC, abstractmethod
 from collections.abc import Sequence
 from typing import (
@@ -15,6 +16,11 @@ from typing import (
     Type,
     TypeVar,
 )
+
+if sys.version_info >= (3, 11):
+    from enum import StrEnum
+else:
+    from strenum import StrEnum
 
 
 """
@@ -148,15 +154,31 @@ class Image(MessageAttachment):
         return res
 
 
+class MessageRole(StrEnum):
+    """
+    An enumeration defining valid values for the role attribute on
+    Message objects
+    """
+
+    # Don't use enum.auto() to define member values since its behaviour
+    # differs between strenum and enum.
+    # When gptcmd no longer supports Python 3.7, we can migrate to the
+    # backports.strenum package.
+
+    USER = "user"
+    ASSISTANT = "assistant"
+    SYSTEM = "system"
+
+
 @dataclasses.dataclass
 class Message:
     """A message sent to or received from an LLM."""
 
     #: The text content of the message
     content: str
-    #: One of "user", "assistant", or "system" defining the conversational
-    #: role of the author of this message
-    role: str
+    #: a member of MessageRole that defines the conversational role of the
+    #: author of this message
+    role: MessageRole
     #: The name of the author of this message
     name: Optional[str] = None
     #: Whether this message is "sticky" (not affected by thread-level deletion
@@ -178,6 +200,8 @@ class Message:
         for k, v in d.items():
             if k == "_attachments":
                 kwargs[k] = [MessageAttachment.from_dict(i) for i in v]
+            elif k == "role":
+                kwargs[k] = MessageRole(v)
             elif k in valid_keys:
                 kwargs[k] = v
         return cls(**kwargs)
@@ -216,7 +240,7 @@ class MessageThread(Sequence):
             if messages is not None
             else []
         )
-        self.names: Dict[str, str] = names if names is not None else {}
+        self.names: Dict[MessageRole, str] = names if names is not None else {}
         self.dirty: bool = False
 
     @classmethod
@@ -227,6 +251,8 @@ class MessageThread(Sequence):
         """
         messages = [Message.from_dict(m) for m in d.get("messages", [])]
         names = d.get("names")
+        if names:
+            names = {MessageRole(k): v for k, v in names.items()}
         res = cls(name=name, messages=messages, names=names)
         return res
 
@@ -315,7 +341,7 @@ class MessageThread(Sequence):
 
     def rename(
         self,
-        role: str,
+        role: MessageRole,
         name: str,
         start_index: Optional[int] = None,
         end_index: Optional[int] = None,
