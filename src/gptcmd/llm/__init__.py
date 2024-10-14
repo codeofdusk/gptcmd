@@ -1,5 +1,6 @@
 import dataclasses
 from abc import ABC, abstractmethod
+from decimal import Decimal
 from enum import Flag, auto
 from typing import (
     Any,
@@ -9,6 +10,7 @@ from typing import (
     Optional,
     Sequence,
     Type,
+    Union,
 )
 
 from ..message import Message, MessageAttachment
@@ -28,7 +30,7 @@ class LLMResponse:
     message: Message
     prompt_tokens: Optional[int] = None
     sampled_tokens: Optional[int] = None
-    cost_in_cents: Optional[int] = None
+    cost_in_cents: Optional[Union[int, Decimal]] = None
 
     def __iter__(self):
         """The default iterator for non-streaming LLMResponse objects."""
