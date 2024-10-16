@@ -1,5 +1,5 @@
 # Gptcmd
-Gptcmd allows you to interact with OpenAI's chat-based models (`gpt-3.5-turbo` and, if available to you, `gpt-4`) efficiently in your terminal. Gptcmd can manage multiple concurrent "threads" of conversation, allowing for free and easy prompt experimentation and iteration. Individual messages can be manipulated, loaded from, and saved to files (both plain text and JSON), and API parameters are fully customizable. In short, Gptcmd is simple yet flexible, useful for both basic conversation and more involved prototyping.
+Gptcmd allows you to interact with OpenAI's chat-based models, such as `gpt-4o`, efficiently in your terminal. Gptcmd can manage multiple concurrent "threads" of conversation, allowing for free and easy prompt experimentation and iteration. Individual messages can be manipulated, loaded from, and saved to files (both plain text and JSON), and API parameters are fully customizable. In short, Gptcmd is simple yet flexible, useful for both basic conversation and more involved prototyping.
 
 ## Getting started
 Gptcmd requires [Python](https://python.org) 3.7.1 or later. It is available on PyPI, and can, for instance, be installed with `pip install gptcmd` at a command line shell. Running `gptcmd` at a shell starts the application. If Python's `bin` or `scripts` directory isn't on your path, you may need to launch the application with a command like `~/.local/bin/gptcmd` (depending on your system configuration). In most cases though, `gptcmd` should "just work".
@@ -412,7 +412,7 @@ Unset all parameters
 ```
 
 ### Names
-GPT allows mesages to be annotated with the name of their author. If you have access to `gpt-4`, it seems to respond better to these annotations in my experience. The `name` command sets the name to be sent with all future messages of the specified role. Its first argument is the role to which this new name should be applied, and its second is the name to use:
+GPT allows mesages to be annotated with the name of their author. The `name` command sets the name to be sent with all future messages of the specified role. Its first argument is the role to which this new name should be applied, and its second is the name to use:
 
 ```
 (gpt-3.5-turbo) model gpt-4
