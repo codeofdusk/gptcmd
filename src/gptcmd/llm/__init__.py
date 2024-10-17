@@ -56,6 +56,9 @@ class LLMProviderFeature(Flag):
     # to be ignored.
     MESSAGE_NAME_FIELD = auto()
 
+    # Whether this LLM implements support for streamed responses
+    RESPONSE_STREAMING = auto()
+
 
 class LLMProvider(ABC):
     """
@@ -68,7 +71,7 @@ class LLMProvider(ABC):
     def __init__(self, model: Optional[str] = None):
         self.model: Optional[str] = model or self.get_best_model()
         self._api_params: Dict[str, Any] = {}
-        self.stream: bool = False
+        self._stream: bool = False
 
     def __init_subclass__(cls):
         cls._attachment_formatters: Dict[
@@ -104,6 +107,25 @@ class LLMProvider(ABC):
     def from_config(cls, conf: Dict):
         "Instantiate this object from a dict of configuration file parameters."
         pass
+
+    @property
+    def stream(self) -> bool:
+        return (
+            self._stream
+            and LLMProviderFeature.RESPONSE_STREAMING
+            in self.supported_features
+        )
+
+    @stream.setter
+    def stream(self, val: bool):
+        if (
+            LLMProviderFeature.RESPONSE_STREAMING
+            not in self.supported_features
+        ):
+            raise NotImplementedError(
+                "Response streaming is not supported by this LLM"
+            )
+        self._stream = val
 
     @property
     def api_params(self) -> Dict[str, Any]:

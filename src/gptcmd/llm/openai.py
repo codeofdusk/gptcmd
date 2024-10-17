@@ -26,13 +26,16 @@ file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 
 class OpenAI(LLMProvider):
-    supported_features = LLMProviderFeature.MESSAGE_NAME_FIELD
+    supported_features = (
+        LLMProviderFeature.MESSAGE_NAME_FIELD
+        | LLMProviderFeature.RESPONSE_STREAMING
+    )
 
     def __init__(self, client, *args, **kwargs):
         self._client = client
         self._models = {m.id for m in self._client.models.list().data}
         super().__init__(*args, **kwargs)
-        self.stream = True
+        self._stream = True
 
     @classmethod
     def from_config(cls, conf: Dict):
@@ -144,6 +147,9 @@ class OpenAI(LLMProvider):
             + Decimal(sampled_tokens) * sampled_scale
         ) * Decimal("100")
 
+    def _supports_streaming(self) -> bool:
+        return not self.model.startswith("o1")
+
     def complete(self, messages: Sequence[Message]) -> LLMResponse:
         kwargs = {
             "model": self.model,
@@ -208,6 +214,19 @@ class OpenAI(LLMProvider):
             if opt not in valid_opts:
                 raise InvalidAPIParameterError(f"Unknown parameter {opt}")
         return params
+
+    @property
+    def stream(self) -> bool:
+        return self._supports_streaming() and self._stream
+
+    @stream.setter
+    def stream(self, val: bool):
+        if not self._supports_streaming():
+            raise NotImplementedError(
+                "Streamed responses are not supported by this model"
+            )
+        else:
+            self._stream = val
 
     @property
     def valid_models(self) -> Iterable[str]:
