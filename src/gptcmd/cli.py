@@ -635,7 +635,7 @@ class Gptcmd(cmd.Cmd):
             return
         if (
             LLMProviderFeature.MESSAGE_NAME_FIELD
-            not in self._llm.supported_features
+            not in self._llm.SUPPORTED_FEATURES
         ):
             print("Name definition not supported")
             return
@@ -662,7 +662,7 @@ class Gptcmd(cmd.Cmd):
         """
         if (
             LLMProviderFeature.MESSAGE_NAME_FIELD
-            not in self._llm.supported_features
+            not in self._llm.SUPPORTED_FEATURES
         ):
             print("Name definition not supported")
             return
@@ -711,7 +711,7 @@ class Gptcmd(cmd.Cmd):
             return
         if (
             LLMProviderFeature.MESSAGE_NAME_FIELD
-            not in self._llm.supported_features
+            not in self._llm.SUPPORTED_FEATURES
         ):
             print("Name definition not supported")
             return

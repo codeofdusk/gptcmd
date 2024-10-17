@@ -66,7 +66,7 @@ class LLMProvider(ABC):
     given a sequence of Messages.
     """
 
-    supported_features: LLMProviderFeature = LLMProviderFeature(0)
+    SUPPORTED_FEATURES: LLMProviderFeature = LLMProviderFeature(0)
 
     def __init__(self, model: Optional[str] = None):
         self.model: Optional[str] = model or self.get_best_model()
@@ -113,14 +113,14 @@ class LLMProvider(ABC):
         return (
             self._stream
             and LLMProviderFeature.RESPONSE_STREAMING
-            in self.supported_features
+            in self.SUPPORTED_FEATURES
         )
 
     @stream.setter
     def stream(self, val: bool):
         if (
             LLMProviderFeature.RESPONSE_STREAMING
-            not in self.supported_features
+            not in self.SUPPORTED_FEATURES
         ):
             raise NotImplementedError(
                 "Response streaming is not supported by this LLM"
