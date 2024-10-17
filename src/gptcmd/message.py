@@ -183,9 +183,9 @@ class Message:
     name: Optional[str] = None
     #: Whether this message is "sticky" (not affected by thread-level deletion
     #: operations)
-    _sticky: bool = False
+    sticky: bool = False
     #: A collection of attached objects, such as images
-    _attachments: Iterable[MessageAttachment] = dataclasses.field(
+    attachments: List[MessageAttachment] = dataclasses.field(
         default_factory=list
     )
 
@@ -198,10 +198,12 @@ class Message:
         valid_keys = [f.name for f in dataclasses.fields(cls)]
         kwargs = {}
         for k, v in d.items():
-            if k == "_attachments":
+            if k == "attachments":
                 kwargs[k] = [MessageAttachment.from_dict(i) for i in v]
             elif k == "role":
                 kwargs[k] = MessageRole(v)
+            elif k == "_sticky":  # v1 sticky field
+                kwargs["sticky"] = v
             elif k in valid_keys:
                 kwargs[k] = v
         return cls(**kwargs)
@@ -209,7 +211,7 @@ class Message:
     def to_dict(self) -> Dict[str, Any]:
         "Exports this message as a serializable dict"
         res = {f.name: getattr(self, f.name) for f in dataclasses.fields(self)}
-        res["_attachments"] = [a.to_dict() for a in self._attachments]
+        res["attachments"] = [a.to_dict() for a in self.attachments]
         return res
 
 
@@ -276,7 +278,7 @@ class MessageThread(Sequence):
 
     @property
     def stickys(self) -> List[Message]:
-        return [m for m in self._messages if m._sticky]
+        return [m for m in self._messages if m.sticky]
 
     def to_dict(self) -> Dict[str, Any]:
         "Exports this thread to a serializable dict."
@@ -308,8 +310,8 @@ class MessageThread(Sequence):
                 states (such as an asterisk for sticky messages)
         """
         lines = (
-            ("*" if display_indicators and msg._sticky else "")
-            + ("@" * len(msg._attachments) if display_indicators else "")
+            ("*" if display_indicators and msg.sticky else "")
+            + ("@" * len(msg.attachments) if display_indicators else "")
             + (msg.name if msg.name is not None else msg.role)
             + ": "
             + msg.content
@@ -321,7 +323,7 @@ class MessageThread(Sequence):
         "Remove the nth message from this thread and return it"
         if n is None:
             n = -1
-        if self._messages[n]._sticky:
+        if self._messages[n].sticky:
             raise PopStickyMessageError
         res = self._messages.pop(n)
         self.dirty = True
@@ -352,7 +354,7 @@ class MessageThread(Sequence):
         messages in the specified range are affected
         """
         for msg in self._messages[start_index:end_index]:
-            if msg.role == role and not msg._sticky:
+            if msg.role == role and not msg.sticky:
                 msg.name = name
                 self.dirty = True
 
@@ -365,5 +367,5 @@ class MessageThread(Sequence):
         messages in the specified range are affected
         """
         for m in self._messages[start_index:end_index]:
-            m._sticky = state
+            m.sticky = state
             self.dirty = True

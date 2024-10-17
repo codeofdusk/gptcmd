@@ -924,7 +924,7 @@ class Gptcmd(cmd.Cmd):
                 return
         try:
             msg = self._current_thread[idx]
-            msg._attachments.append(img)
+            msg.attachments.append(img)
             if (
                 not (
                     "gpt-4-turbo" in self._llm.model

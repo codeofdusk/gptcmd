@@ -1,4 +1,3 @@
-import dataclasses
 import inspect
 
 from decimal import Decimal
@@ -49,19 +48,16 @@ class OpenAI(LLMProvider):
         return cls(client, model=model)
 
     def _message_to_openai(self, msg: Message) -> Dict[str, Any]:
-        res = dataclasses.asdict(
-            msg,
-            dict_factory=lambda x: {
-                k: v
-                for k, v in x
-                if not (k.startswith("_") or (k == "name" and v is None))
-            },
-        )
-        if msg._attachments:
+        res = {"role": msg.role}
+        if msg.name:
+            res["name"] = msg.name
+        if msg.attachments:
             res["content"] = [
                 {"type": "text", "text": msg.content},
-                *[self.format_attachment(a) for a in msg._attachments],
+                *[self.format_attachment(a) for a in msg.attachments],
             ]
+        else:
+            res["content"] = msg.content
         return res
 
     @staticmethod
