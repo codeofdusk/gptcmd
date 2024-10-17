@@ -105,7 +105,7 @@ class TestMessageThread(unittest.TestCase):
 
     def test_pop_sticky(self):
         self.thread.append(
-            Message(content="Hello", role=MessageRole.USER, _sticky=True)
+            Message(content="Hello", role=MessageRole.USER, sticky=True)
         )
         with self.assertRaises(PopStickyMessageError):
             self.thread.pop()
@@ -118,7 +118,7 @@ class TestMessageThread(unittest.TestCase):
 
     def test_clear_sticky(self):
         self.thread.append(
-            Message(content="Hello", role=MessageRole.USER, _sticky=True)
+            Message(content="Hello", role=MessageRole.USER, sticky=True)
         )
         self.thread.append(Message(content="Hi", role=MessageRole.ASSISTANT))
         self.thread.clear()
@@ -157,8 +157,8 @@ class TestMessageThread(unittest.TestCase):
         self.thread.append(Message(content="Hello", role=MessageRole.USER))
         self.thread.append(Message(content="Hi", role=MessageRole.ASSISTANT))
         self.thread.sticky(0, 1, True)
-        self.assertTrue(self.thread[0]._sticky)
-        self.assertFalse(self.thread[1]._sticky)
+        self.assertTrue(self.thread[0].sticky)
+        self.assertFalse(self.thread[1].sticky)
 
     def test_messages_property(self):
         self.thread.append(Message(content="Hello", role=MessageRole.USER))
@@ -204,18 +204,18 @@ class TestMessage(unittest.TestCase):
         self.assertEqual(message.content, "Hello")
         self.assertEqual(message.role, MessageRole.USER)
         self.assertIsNone(message.name)
-        self.assertFalse(message._sticky)
-        self.assertEqual(message._attachments, [])
+        self.assertFalse(message.sticky)
+        self.assertEqual(message.attachments, [])
 
     def test_message_with_attachment(self):
         image = Image(url="http://example.com/image.jpg")
         message = Message(
             content="What's in this image?",
             role=MessageRole.USER,
-            _attachments=[image],
+            attachments=[image],
         )
-        self.assertEqual(len(message._attachments), 1)
-        self.assertIsInstance(message._attachments[0], Image)
+        self.assertEqual(len(message.attachments), 1)
+        self.assertIsInstance(message.attachments[0], Image)
 
     def test_message_to_dict(self):
         message = Message(content="Hello", role=MessageRole.USER, name="Bill")
@@ -229,8 +229,8 @@ class TestMessage(unittest.TestCase):
             "content": "Hello",
             "role": "user",
             "name": "Bill",
-            "_sticky": True,
-            "_attachments": [
+            "sticky": True,
+            "attachments": [
                 {
                     "type": "image_url",
                     "data": {"url": "http://example.com/image.jpg"},
@@ -241,9 +241,9 @@ class TestMessage(unittest.TestCase):
         self.assertEqual(message.content, "Hello")
         self.assertEqual(message.role, MessageRole.USER)
         self.assertEqual(message.name, "Bill")
-        self.assertTrue(message._sticky)
-        self.assertEqual(len(message._attachments), 1)
-        self.assertIsInstance(message._attachments[0], Image)
+        self.assertTrue(message.sticky)
+        self.assertEqual(len(message.attachments), 1)
+        self.assertIsInstance(message.attachments[0], Image)
 
 
 class TestImage(unittest.TestCase):
