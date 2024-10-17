@@ -612,11 +612,14 @@ class Gptcmd(cmd.Cmd):
         Toggle streaming, which allows responses to be displayed as they are
         generated. This command takes no arguments.
         """
-        self._llm.stream = not self._llm.stream
-        if self._llm.stream:
-            print("On")
-        else:
-            print("Off")
+        try:
+            self._llm.stream = not self._llm.stream
+            if self._llm.stream:
+                print("On")
+            else:
+                print("Off")
+        except NotImplementedError as e:
+            print(str(e))
 
     def do_name(self, arg):
         """
