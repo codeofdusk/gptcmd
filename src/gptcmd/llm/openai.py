@@ -26,7 +26,7 @@ file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 
 class OpenAI(LLMProvider):
-    supported_features = (
+    SUPPORTED_FEATURES = (
         LLMProviderFeature.MESSAGE_NAME_FIELD
         | LLMProviderFeature.RESPONSE_STREAMING
     )
