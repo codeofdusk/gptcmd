@@ -440,17 +440,59 @@ class Gptcmd(cmd.Cmd):
     def complete_delete(self, text, line, begidx, endidx):
         return self.__class__._complete_from_key(self._threads, text)
 
-    def do_flip(self, arg):
+    def do_move(self, arg):
         """
-        Move the last message to the start of the thread. This command takes
-        no arguments.
+        Move the message at the beginning of a range to the end of that range.
+        In other words, move <i> <j> moves the ith message of a thread to
+        index j.
         """
+        if not arg:
+            print("Usage: move <from> <to>")
+            return
         try:
-            msg = self._current_thread.flip()
+            i, j = self._user_range_to_python_range(arg)
+        except ValueError:
+            print("Invalid range specified")
+            return
+        length = len(self._current_thread.messages)
+        if i is None:
+            i = 0
+        if j is None:
+            j = length
+        if i < 0:
+            i += length
+        if j < 0:
+            j += length
+        elif j > 0:
+            j -= 1  # Adjust end for 1-based indexing
+        if not (0 <= j <= length):
+            print("Destination out of bounds")
+            return
+        try:
+            msg = self._current_thread.move(i, j)
+        except IndexError:
+            print("Message doesn't exist")
+            return
         except PopStickyMessageError:
             print("That message is sticky; unsticky it first")
             return
-        print(self.__class__._fragment("{msg} moved to start", msg))
+        if j == i:
+            move_info = "to same position"
+        elif j == 0:
+            move_info = "to start"
+        elif j >= length - 1:
+            move_info = "to end"
+        elif j > i:
+            move_info = self._fragment(
+                "before {msg}", msg=self._current_thread.messages[j + 1]
+            )
+        elif j < i:
+            move_info = self._fragment(
+                "after {msg}", msg=self._current_thread.messages[j - 1]
+            )
+        else:
+            move_info = "to unknown position"
+        print(self.__class__._fragment("{msg} moved ", msg=msg) + move_info)
 
     def do_slice(self, arg):
         """

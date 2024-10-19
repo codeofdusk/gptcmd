@@ -128,7 +128,7 @@ class TestMessageThread(unittest.TestCase):
     def test_flip(self):
         self.thread.append(Message(content="Hello", role=MessageRole.USER))
         self.thread.append(Message(content="Hi", role=MessageRole.ASSISTANT))
-        flipped = self.thread.flip()
+        flipped = self.thread.move(-1, 0)
         self.assertEqual(flipped.content, "Hi")
         self.assertEqual(self.thread[0].content, "Hi")
         self.assertEqual(self.thread[0].role, MessageRole.ASSISTANT)
