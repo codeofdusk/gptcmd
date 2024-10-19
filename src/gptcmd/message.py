@@ -100,10 +100,17 @@ class MessageAttachment(ABC):
         Instantiate a MessageAttachment from a dict in the format returned by
         MessageAttachment.to_dict()
         """
-        attachment_type = d.get("type")
-        return attachment_type_registrar.get(attachment_type)._deserialize(
-            d.get("data", {})
-        )
+        attachment_type_key = d.get("type")
+        attachment_data = d.get("data", {})
+        try:
+            attachment_type = attachment_type_registrar.get(
+                attachment_type_key
+            )
+        except KeyError:
+            return UnknownAttachment(
+                _type=attachment_type_key, _data=attachment_data
+            )
+        return attachment_type._deserialize(attachment_data)
 
     @classmethod
     @abstractmethod
@@ -152,6 +159,30 @@ class Image(MessageAttachment):
         if self.detail is not None:
             res["detail"] = self.detail
         return res
+
+
+class UnknownAttachment(MessageAttachment):
+    """
+    A MessageAttachment created when a dict in the form returned by
+    MessageAttachment.to_dict contains an unknown or ambiguous type.
+    This class should not be instantiated directly.
+    """
+
+    def __init__(self, _type: str, _data: Dict):
+        self.data = _data
+        self.type = _type
+
+    @classmethod
+    def _deserialize(cls, data):
+        return cls(_type=None, _data=data)
+
+    def _serialize(self):
+        return self.data.copy()
+
+    def to_dict(self):
+        # Since these attachments are explicitly not registered, use our
+        # internal type field instead of the registrar.
+        return {"type": self.type, "data": self._serialize()}
 
 
 class MessageRole(StrEnum):
@@ -217,6 +248,7 @@ class Message:
 
 class PopStickyMessageError(Exception):
     "Thrown when attempting to pop a Message marked sticky"
+
     pass
 
 
