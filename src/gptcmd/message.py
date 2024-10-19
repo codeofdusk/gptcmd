@@ -367,10 +367,12 @@ class MessageThread(Sequence):
             self.dirty = True
         self._messages = self.stickys
 
-    def flip(self) -> Message:
-        "Move the final message to the beginning of the thread"
-        msg = self.pop()
-        self._messages.insert(0, msg)
+    def move(self, i: Optional[int], j: Optional[int]) -> Message:
+        """Pop the message at index i and re-insert it at index j"""
+        msg = self.pop(i)
+        if j is None:
+            j = len(self)
+        self._messages.insert(j, msg)
         return msg
 
     def rename(

@@ -281,7 +281,7 @@ user: abc
 user: ghi
 ```
 
-The `flip` command moves the last message to the start of the conversation. This is often useful for adding a system message to conversations that previously didn't have one:
+The `move` command moves the message at the start of a range to the end of that range. This is often useful for adding a system message to conversations that previously didn't have one:
 
 ```
 (gpt-3.5-turbo) say Prove that pi is not exactly equal to 3.14628.
@@ -303,7 +303,7 @@ Therefore, we can conclude that pi is not exactly equal to 3.14628.
 user: Prove that pi is not exactly equal to 3.14628.
 (gpt-3.5-turbo) system As a philosophical proof assistant, you prefer to use the technique of proof by contradiction at any opportunity. Therefore, whenever you are asked to prove something, you first assume that the proposition is false, then given this assumption, you attempt to find a contradiction.
 OK
-(gpt-3.5-turbo) flip
+(gpt-3.5-turbo) move -1 1
 'As a philosophical proof assistant, you prefer to use the...' moved to start
 (gpt-3.5-turbo) view 1 2
 system: As a philosophical proof assistant, you prefer to use the technique of proof by contradiction at any opportunity. Therefore, whenever you are asked to prove something, you first assume that the proposition is false, then given this assumption, you attempt to find a contradiction.
