@@ -13,7 +13,7 @@ from typing import (
     Union,
 )
 
-from ..message import Message, MessageAttachment
+from ..message import Message, MessageAttachment, UnknownAttachment
 
 
 """
@@ -176,6 +176,11 @@ class LLMProvider(ABC):
     def format_attachment(
         self, attachment: MessageAttachment
     ) -> Dict[str, Any]:
+        if isinstance(attachment, UnknownAttachment):
+            raise ValueError(
+                f"{attachment.type} attachments are not supported. Perhaps you"
+                " need to update Gptcmd or install a package?"
+            )
         for cls in self.__class__.__mro__:
             formatter = getattr(cls, "_attachment_formatters", {}).get(
                 type(attachment)

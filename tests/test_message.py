@@ -5,6 +5,7 @@ from gptcmd.message import (
     MessageRole,
     MessageThread,
     PopStickyMessageError,
+    UnknownAttachment,
 )
 
 """
@@ -244,6 +245,26 @@ class TestMessage(unittest.TestCase):
         self.assertTrue(message.sticky)
         self.assertEqual(len(message.attachments), 1)
         self.assertIsInstance(message.attachments[0], Image)
+
+    def test_message_unknown_attachment(self):
+        message_dict = {
+            "content": "",
+            "role": "user",
+            "attachments": [
+                {
+                    "type": "nonexistent_attachment",
+                    "data": {"username": "kwebb"},
+                }
+            ],
+        }
+        message = Message.from_dict(message_dict)
+        self.assertEqual(len(message.attachments), 1)
+        self.assertIsInstance(message.attachments[0], UnknownAttachment)
+        serialized_message = message.to_dict()
+        self.assertEqual(
+            message_dict["attachments"][0],
+            serialized_message["attachments"][0],
+        )
 
 
 class TestImage(unittest.TestCase):
