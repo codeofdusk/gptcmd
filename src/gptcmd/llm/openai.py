@@ -174,9 +174,18 @@ class OpenAI(LLMProvider):
             )
         choice = resp.choices[0]
         prompt_tokens = resp.usage.prompt_tokens
-        cached_prompt_tokens = dict(
-            getattr(resp.usage, "prompt_tokens_details", {})
-        ).get("cached_tokens", 0)
+        # Older versions of the openai package return
+        # prompt_tokens_details as a dict, and newer versions return it as
+        # a custom type or None.
+        # Standardize on a dict representation.
+        prompt_tokens_details = getattr(
+            resp.usage, "prompt_tokens_details", None
+        )
+        if prompt_tokens_details is None:
+            prompt_tokens_details = {}
+        else:
+            prompt_tokens_details = dict(prompt_tokens_details)
+        cached_prompt_tokens = prompt_tokens_details.get("cached_tokens", 0)
         sampled_tokens = resp.usage.completion_tokens
 
         return LLMResponse(
@@ -289,9 +298,20 @@ class StreamedOpenAIResponse(LLMResponse):
         chunk = next(self._stream)
         if chunk.usage:
             prompt_tokens = chunk.usage.prompt_tokens
-            cached_prompt_tokens = dict(
-                getattr(chunk.usage, "prompt_tokens_details", {})
-            ).get("cached_tokens", 0)
+            # Older versions of the openai package return
+            # prompt_tokens_details as a dict, and newer versions return it as
+            # a custom type or None.
+            # Standardize on a dict representation.
+            prompt_tokens_details = getattr(
+                chunk.usage, "prompt_tokens_details", None
+            )
+            if prompt_tokens_details is None:
+                prompt_tokens_details = {}
+            else:
+                prompt_tokens_details = dict(prompt_tokens_details)
+            cached_prompt_tokens = prompt_tokens_details.get(
+                "cached_tokens", 0
+            )
             sampled_tokens = chunk.usage.completion_tokens
             self.prompt_tokens = prompt_tokens
             self.sampled_tokens = sampled_tokens
