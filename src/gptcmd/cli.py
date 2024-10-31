@@ -320,6 +320,8 @@ class Gptcmd(cmd.Cmd):
             print("\n", end="")
         except KeyboardInterrupt:
             print("\nDisconnected from stream")
+        except CompletionError as e:
+            print(str(e))
         finally:
             cost_info = ""
             if res.cost_in_cents is not None:

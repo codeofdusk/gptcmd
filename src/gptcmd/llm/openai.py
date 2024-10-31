@@ -295,7 +295,10 @@ class StreamedOpenAIResponse(LLMResponse):
         return self
 
     def __next__(self):
-        chunk = next(self._stream)
+        try:
+            chunk = next(self._stream)
+        except openai.OpenAIError as e:
+            raise CompletionError(str(e)) from e
         if chunk.usage:
             prompt_tokens = chunk.usage.prompt_tokens
             # Older versions of the openai package return
