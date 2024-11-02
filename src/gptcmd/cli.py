@@ -1,5 +1,6 @@
 import argparse
 import cmd
+import dataclasses
 import json
 import os
 import re
@@ -496,24 +497,36 @@ class Gptcmd(cmd.Cmd):
             move_info = "to unknown position"
         print(self.__class__._fragment("{msg} moved ", msg=msg) + move_info)
 
-    def do_slice(self, arg):
+    def do_copy(self, arg):
         """
-        Copy the range of messages provided as argument to the detached thread.
-        example: "slice 1 3"
+        Append copies of the messages in the specified range to the thread
+        provided. If no thread name is specified, the copy command copies
+        messages to the detached thread.
+        example: "copy 1 3" copies the first through third message of this
+        thread to the detached thread.
+        "copy . messages" copies all messages in this thread to a thread
+        called "messages", creating it if it doesn't exist.
         """
+        m = re.match(
+            (r"((?:-?\d+|\.)(?:\s+-?\d+|\s*\.)*)" r"(?: (\S+))?$"), arg
+        )
+        if not m:
+            print("Usage: copy <range> [thread]")
+            return
+        ref, threadname = m.groups()
         try:
-            start, end = self.__class__._user_range_to_python_range(arg)
+            start, end = self.__class__._user_range_to_python_range(ref)
         except ValueError:
-            print("Invalid slice")
+            print("Invalid range")
             return
         s = self._current_thread[start:end]
         if not s:
-            print("Empty slice")
+            print("Empty selection")
             return
         if len(s) == 1:
             print(
                 self.__class__._fragment(
-                    "Slice contains one message: {msg}", s[0]
+                    "Selection contains one message: {msg}", s[0]
                 )
             )
         else:
@@ -524,13 +537,28 @@ class Gptcmd(cmd.Cmd):
             print(
                 self.__class__._fragment("Last message selected: {msg}", s[-1])
             )
-        if self._detached.dirty:
-            print("Unsaved detached messages will be lost.")
-        can_slice = self.__class__._confirm("Confirm slice?")
-        if not can_slice:
+        if threadname is None:
+            thread = self._detached
+            thread_info = "detached thread"
+        elif threadname in self._threads:
+            thread = self._threads.get(threadname)
+            thread_info = threadname
+        else:
+            thread = None
+            thread_info = f"New thread {threadname}"
+        can_copy = self.__class__._confirm(f"Copy to {thread_info}?")
+        if not can_copy:
             return
-        self._detached.messages = s
-        print("Sliced")
+        if thread is None:  # if this is a new thread
+            self._threads[threadname] = self.thread_cls(
+                name=threadname,
+                messages=s,
+                names=self._current_thread.names,
+            )
+        else:
+            for msg in s:
+                thread.append(dataclasses.replace(msg))
+        print("Copied")
 
     def do_retry(self, arg):
         """

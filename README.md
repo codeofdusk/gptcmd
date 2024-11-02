@@ -616,7 +616,7 @@ induction2(gpt-3.5-turbo) thread induction
 Switched to thread 'induction'
 ```
 
-The `slice` command copies a range of messages to the detached thread, overwriting any existing contents:
+The `copy` command copies all messages in the specified range and appends the copies to the thread provided, creating it if it doesn't exist. If no thread is provided, `copy` copies messages to the detached thread:
 
 ```
 induction(gpt-3.5-turbo) thread
@@ -624,18 +624,14 @@ detached thread
 (gpt-3.5-turbo) clear
 Delete 4 messages? (y/n)y
 OK
-(gpt-3.5-turbo) say Write a short description of the NVDA screen reader.
-...
-NVDA (NonVisual Desktop Access) is a free, open-source screen reader for Windows that allows individuals who are blind or visually impaired to access and navigate their computer. It provides spoken feedback for all on-screen text, including web pages, documents, and applications, as well as keyboard shortcuts and customizable settings. NVDA is compatible with various braille displays and can be used with a variety of languages and speech synthesizers. It is designed to be easy to use and highly customizable, making it a popular choice for many users.
 (gpt-3.5-turbo) thread induction2
 Switched to thread 'induction2'
-induction2(gpt-3.5-turbo) slice 1 2
+induction2(gpt-3.5-turbo) copy 1 2
 Selecting 2 messages
 First message selected: 'What is the closed-form formula to find the nth...'
 Last message selected: 'The closed-form formula to find the nth Fibonacci...'
-Unsaved detached messages will be lost.
-Confirm slice? (y/n)y
-Sliced
+Copy to detached thread? (y/n)y
+Copied
 induction2(gpt-3.5-turbo) thread
 detached thread
 (gpt-3.5-turbo) say Write a C program that implements this formula to print the first 10 Fibanacci numbers.
