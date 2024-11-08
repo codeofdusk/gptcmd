@@ -329,7 +329,7 @@ class StreamedOpenAIResponse(LLMResponse):
         if len(chunk.choices) != 1:
             return ""
         delta = chunk.choices[0].delta
-        if delta.role:
+        if delta.role and delta.role != self.message.role:
             self.message.role += delta.role
         if delta.content:
             self.message.content += delta.content
