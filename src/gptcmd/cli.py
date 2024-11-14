@@ -1110,6 +1110,31 @@ class Gptcmd(cmd.Cmd):
             # Clean up the temporary file
             os.unlink(tempname)
 
+    def do_edit(self, arg):
+        """
+        Opens the content of the specified message in an external editor for
+        editing. With no argument, edits the last message.
+        """
+        try:
+            idx = (
+                -1
+                if not arg
+                else self.__class__._user_range_to_python_range(arg)[0]
+            )
+        except ValueError as e:
+            print("Invalid message specification")
+            return
+        try:
+            msg = self._current_thread.messages[idx]
+            new = self._edit_interactively(msg.content)
+            if new:
+                msg.content = new
+                print("Edited")
+            else:
+                print("Cancelled")
+        except IndexError:
+            print("Message doesn't exist")
+
     def do_quit(self, arg):
         "Exit the program."
         warn = ""

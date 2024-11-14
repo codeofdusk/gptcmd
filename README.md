@@ -325,6 +325,8 @@ Therefore, our assumption that pi is exactly equal to 3.14628 leads to a contrad
 Thus, we can conclude that pi is not exactly equal to 3.14628.
 ```
 
+The `edit` command with no arguments opens the contents of the last message in an external text editor for editing. Providing the index of a message to `edit` as an argument edits that message.
+
 ### Message streaming
 The `stream` command toggles OpenAI message streaming. By default, streaming is enabled, so long responses from GPT are output in real time as they are generated. While a message is being streamed, pressing <kbd>Control</kbd>+<kbd>c</kbd> causes Gptcmd to stop waiting for the message to generate fully, so other commands can be used. When streaming is disabled, Gptcmd retrieves an entire response for each query and displays it when it arrives.
 
