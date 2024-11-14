@@ -27,6 +27,19 @@ show_incomplete_cost = false
 # (generated) tokens used for each request is displayed when available.
 show_token_usage = true
 
+# This option controls how Gptcmd handles situations when the user invokes an
+# external editor to add a message but then closes the editor without entering
+# any content.
+# By default, this option is set to "never", meaning Gptcmd will cancel the
+# operation if no content is entered.
+# When this option is set to "ask", Gptcmd will prompt the user to confirm
+# whether to add an empty message or cancel.
+# Setting this option to "always" will add an empty message without prompting,
+# replicating Gptcmd's behaviour before version 2.0.0.
+# Unless you know that you have a specific need to create empty messages,
+# "never" is recommended.
+allow_add_empty_messages = "never"
+
 # Account Configuration
 # The following sections configure Gptcmd's connections to large language model provider accounts.
 # By default, Gptcmd uses the [accounts.default] section on startup.

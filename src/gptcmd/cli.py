@@ -4,7 +4,9 @@ import dataclasses
 import json
 import os
 import re
+import subprocess
 import sys
+import tempfile
 from ast import literal_eval
 from textwrap import shorten
 from typing import (
@@ -220,9 +222,32 @@ class Gptcmd(cmd.Cmd):
         if self._detached:
             print(f"({len(self._detached)} detached messages)")
 
+    def _should_allow_add_empty_messages(self, role: MessageRole) -> bool:
+        allow_add_empty_messages = self.config.conf.get(
+            "allow_add_empty_messages"
+        )
+        if allow_add_empty_messages == "always":
+            return True
+        elif allow_add_empty_messages == "ask":
+            return self.__class__._confirm(f"Add empty {role} message?")
+        else:  # never (default)
+            return False
+
     def _append_new_message(
-        self, arg: str, role: MessageRole, _print_on_success: bool = True
-    ) -> Message:
+        self,
+        arg: str,
+        role: MessageRole,
+        _print_on_success: bool = True,
+        _edit_on_empty: bool = True,
+    ) -> Optional[Message]:
+        if not arg and _edit_on_empty:
+            arg = self._edit_interactively("")
+            if not arg:
+                if self._should_allow_add_empty_messages(role):
+                    arg = ""
+                else:
+                    print("Cancelled")
+                    return None
         msg = Message(content=arg, role=role)
         self._current_thread.append(msg)
         if _print_on_success:
@@ -232,7 +257,8 @@ class Gptcmd(cmd.Cmd):
     def do_user(self, arg):
         """
         Append a new user message (with content provided as argument) to the
-        current thread.
+        current thread. With no argument, opens an external editor for
+        message composition.
         example: "user Hello, world!"
         """
         self._append_new_message(arg=arg, role=MessageRole.USER)
@@ -240,15 +266,17 @@ class Gptcmd(cmd.Cmd):
     def do_assistant(self, arg):
         """
         Append a new assistant message (with content provided as argument) to
-        the current thread.
+        the current thread. With no argument, opens an external editor for
+        message composition.
         example: "assistant how can I help?"
         """
         self._append_new_message(arg=arg, role=MessageRole.ASSISTANT)
 
     def do_system(self, arg):
         """
-        Append a new system message (with content provided as argument) to
-        the current thread.
+        Append a new system message (with content provided as argument) to the
+        current thread. With no argument, opens an external editor for
+        message composition.
         example: "system You are a friendly assistant."
         """
         self._append_new_message(arg=arg, role=MessageRole.SYSTEM)
@@ -855,7 +883,7 @@ class Gptcmd(cmd.Cmd):
         try:
             with open(arg, "w", encoding="utf-8") as cam:
                 json.dump(res, cam, indent=2)
-        except (OSError, UnicodeDecodeError) as e:
+        except (OSError, UnicodeEncodeError) as e:
             print(str(e))
             return
         for thread in self._threads.values():
@@ -923,7 +951,9 @@ class Gptcmd(cmd.Cmd):
         role = MessageRole(args[-1])
         try:
             with open(path, encoding="utf-8", errors="ignore") as fin:
-                self._append_new_message(arg=fin.read(), role=role)
+                self._append_new_message(
+                    arg=fin.read(), role=role, _edit_on_empty=False
+                )
         except (FileNotFoundError, OSError, UnicodeDecodeError) as e:
             print(str(e))
             return
@@ -1036,6 +1066,49 @@ class Gptcmd(cmd.Cmd):
 
     def complete_account(self, text, line, begidx, endidx):
         return self.__class__._complete_from_key(self.config.accounts, text)
+
+    def _edit_interactively(
+        self, initial_text: str, filename_prefix: str = "gptcmd"
+    ) -> Optional[str]:
+        try:
+            with tempfile.NamedTemporaryFile(
+                prefix=filename_prefix,
+                mode="w",
+                delete=False,
+                encoding="utf-8",
+            ) as cam:
+                cam.write(initial_text)
+                tempname = cam.name
+        except (FileNotFoundError, OSError, UnicodeEncodeError) as e:
+            print(e)
+            return None
+        except KeyboardInterrupt:
+            return None
+        try:
+            mtime_before = os.path.getmtime(tempname)
+            subprocess.run((*self.config.editor, tempname), check=True)
+            mtime_after = os.path.getmtime(tempname)
+            if mtime_after == mtime_before:
+                # File was not changed
+                return None
+            with open(tempname, encoding="utf-8") as fin:
+                return fin.read()
+        except FileNotFoundError:
+            editor_cmd = " ".join(self.config.editor)
+            print(f"Editor {editor_cmd} could not be found")
+            return None
+        except (
+            UnicodeDecodeError,
+            subprocess.CalledProcessError,
+            ConfigError,
+        ) as e:
+            print(e)
+            return None
+        except KeyboardInterrupt:
+            return None
+        finally:
+            # Clean up the temporary file
+            os.unlink(tempname)
 
     def do_quit(self, arg):
         "Exit the program."

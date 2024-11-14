@@ -1,9 +1,10 @@
 import os
 import sys
 import platform
+import shlex
 import shutil
 from importlib import resources
-from typing import Dict, Optional, Type
+from typing import Dict, List, Optional, Type
 
 if sys.version_info >= (3, 8):
     from importlib.metadata import entry_points
@@ -157,6 +158,11 @@ class ConfigManager:
         except StopIteration:
             raise ConfigError("No default account configured")
 
+    @property
+    def editor(self) -> List[str]:
+        posix = platform.system().lower() != "windows"
+        return shlex.split(self.__class__._get_default_editor(), posix=posix)
+
     @staticmethod
     def _get_config_root():
         """Get the root directory for the configuration file."""
@@ -176,3 +182,21 @@ class ConfigManager:
         "Load the sample configuration file as a dict"
         with resources.open_binary("gptcmd", "config_sample.toml") as fin:
             return tomllib.load(fin)
+
+    @staticmethod
+    def _get_default_editor():
+        system = platform.system().lower()
+        if system == "windows":
+            # On Windows, default to notepad
+            return "notepad"
+        else:
+            # On Unix-like systems, use the EDITOR environment variable if set
+            editor = os.environ.get("EDITOR")
+            if editor:
+                return editor
+            else:
+                # Try common editors in order of preference
+                for cmd in ("nano", "emacs", "vim", "ed", "vi"):
+                    if shutil.which(cmd):
+                        return cmd
+                raise ConfigError("No editor available")
