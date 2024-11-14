@@ -220,16 +220,18 @@ class Gptcmd(cmd.Cmd):
         if self._detached:
             print(f"({len(self._detached)} detached messages)")
 
+    def _append_new_message(self, arg: str, role: MessageRole):
+        msg = Message(content=arg, role=role)
+        self._current_thread.append(msg)
+        print(self.__class__._fragment("{msg} added as " + role, msg))
+
     def do_user(self, arg):
         """
         Append a new user message (with content provided as argument) to the
         current thread.
         example: "user Hello, world!"
         """
-        self._current_thread.append(
-            Message(content=arg, role=MessageRole.USER)
-        )
-        print("OK")
+        self._append_new_message(arg=arg, role=MessageRole.USER)
 
     def do_assistant(self, arg):
         """
@@ -237,10 +239,7 @@ class Gptcmd(cmd.Cmd):
         the current thread.
         example: "assistant how can I help?"
         """
-        self._current_thread.append(
-            Message(content=arg, role=MessageRole.ASSISTANT)
-        )
-        print("OK")
+        self._append_new_message(arg=arg, role=MessageRole.ASSISTANT)
 
     def do_system(self, arg):
         """
@@ -248,10 +247,7 @@ class Gptcmd(cmd.Cmd):
         the current thread.
         example: "system You are a friendly assistant."
         """
-        self._current_thread.append(
-            Message(content=arg, role=MessageRole.SYSTEM)
-        )
-        print("OK")
+        self._append_new_message(arg=arg, role=MessageRole.SYSTEM)
 
     def do_first(self, arg):
         """
@@ -923,9 +919,7 @@ class Gptcmd(cmd.Cmd):
         role = MessageRole(args[-1])
         try:
             with open(path, encoding="utf-8", errors="ignore") as fin:
-                msg = Message(content=fin.read(), role=role)
-                self._current_thread.append(msg)
-                print(self.__class__._fragment("{msg} read as " + role, msg))
+                self._append_new_message(arg=fin.read(), role=role)
         except (FileNotFoundError, OSError, UnicodeDecodeError) as e:
             print(str(e))
             return

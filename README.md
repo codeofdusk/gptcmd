@@ -155,7 +155,7 @@ OpenAI's API supports messages of three "roles": user, representing the end-user
 
 ```
 (gpt-3.5-turbo) system As a philosophical proof assistant, you prefer to use the technique of proof by contradiction at any opportunity. Therefore, whenever you are asked to prove something, you first assume that the proposition is false, then given this assumption, you attempt to find a contradiction.
-OK
+'As a philosophical proof assistant, you prefer to use the...' added as system
 (gpt-3.5-turbo) say Prove that all cacti are succulents.
 ...
 To prove that all cacti are succulents, we will use proof by contradiction. We will assume that there exists a cactus that is not a succulent and show that this leads to a contradiction.
@@ -171,9 +171,9 @@ Similarly, user and assistant messages can be added with the `user` and `assista
 
 ```
 (gpt-3.5-turbo) user What are the first five Fibanacci numbers?
-OK
+'What are the first five Fibanacci numbers?' added as user
 (gpt-3.5-turbo) assistant 1, 1, 2, 3, 5.
-OK
+'1, 1, 2, 3, 5.' added as assistant
 (gpt-3.5-turbo) say And the next five?
 ...
 8, 13, 21, 34, 55.
@@ -183,7 +183,7 @@ The `send` command sends the conversation in its current state to GPT and reques
 
 ```
 (gpt-3.5-turbo) user What are the first ten digits of pi?
-OK
+'What are the first ten digits of pi?' added as user
 (gpt-3.5-turbo) send
 ...
 3.141592653
@@ -209,7 +209,7 @@ Images can be attached to messages with the `image` command, which accepts two a
 
 ```
 (gpt-4-turbo) user What's in this image?
-OK
+"What's in this image?" added as user
 (gpt-4-turbo) image https://upload.wikimedia.org/wikipedia/commons/c/ce/Long_cane.jpg
 Image added to "What's in this image?"
 ```
@@ -269,11 +269,11 @@ Providing the index of a single message as an argument to `pop` deletes the spec
 
 ```
 (gpt-3.5-turbo) user abc
-OK
+'abc' added as user
 (gpt-3.5-turbo) user def
-OK
+'def' added as user
 (gpt-3.5-turbo) user ghi
-OK
+'ghi' added as user
 (gpt-3.5-turbo) pop 2
 'def' deleted
 (gpt-3.5-turbo) view
@@ -302,7 +302,7 @@ Therefore, we can conclude that pi is not exactly equal to 3.14628.
 (gpt-3.5-turbo) first
 user: Prove that pi is not exactly equal to 3.14628.
 (gpt-3.5-turbo) system As a philosophical proof assistant, you prefer to use the technique of proof by contradiction at any opportunity. Therefore, whenever you are asked to prove something, you first assume that the proposition is false, then given this assumption, you attempt to find a contradiction.
-OK
+'As a philosophical proof assistant, you prefer to use the...' added as system
 (gpt-3.5-turbo) move -1 1
 'As a philosophical proof assistant, you prefer to use the...' moved to start
 (gpt-3.5-turbo) view 1 2
@@ -443,15 +443,15 @@ Name annotations are useful for providing one- or multi-shot prompts to GPT, in 
 
 ```
 (gpt-4) system You are a helpful assistant who understands many languages very well, but can only speak Spanish and therefore you always respond in that language.
-OK
+'You are a helpful assistant who understands many languages...' added as system
 (gpt-4) name system example_user
 system set to 'example_user'
 (gpt-4) system Hello!
-OK
+'Hello!' added as system
 (gpt-4) name system example_assistant
 system set to 'example_assistant'
 (gpt-4) system ¡Hola! ¿Cómo estás?
-OK
+'¡Hola! ¿Cómo estás?' added as system
 (gpt-4) view
 system: You are a helpful assistant who understands many languages very well, but can only speak Spanish and therefore you always respond in that language.
 example_user: Hello!
@@ -468,7 +468,7 @@ Messages can be marked "sticky", so deletion, renaming, and similar modification
 
 ```
 (gpt-3.5-turbo) system You are a Python programmer. Therefore, when responding, you write in Python source code exclusively.
-OK
+'You are a Python programmer. Therefore, when responding, you...' added as system
 (gpt-3.5-turbo) sticky .
 OK
 ```
