@@ -161,7 +161,10 @@ class ConfigManager:
     @property
     def editor(self) -> List[str]:
         posix = platform.system().lower() != "windows"
-        return shlex.split(self.__class__._get_default_editor(), posix=posix)
+        editor = (
+            self.conf.get("editor") or self.__class__._get_default_editor()
+        )
+        return shlex.split(editor, posix=posix)
 
     @staticmethod
     def _get_config_root():

@@ -197,7 +197,7 @@ In fact, the `say` command just adds a user message and sends the conversation:
 3.141592653
 ```
 
-With no arguments, the `user`, `assistant`, `system`, and `say` commands open an external text editor (based on your system) for message composition.
+With no arguments, the `user`, `assistant`, `system`, and `say` commands open an external text editor (based on your system or Gptcmd configuration) for message composition.
 
 ### Working with images
 OpenAI's vision model supports messages containing images. The `model` command can be used to switch the currently active model. We'll use it now to switch to a model with image support. Note that the prompt updates to show the currently selected model:

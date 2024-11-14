@@ -27,6 +27,15 @@ show_incomplete_cost = false
 # (generated) tokens used for each request is displayed when available.
 show_token_usage = true
 
+# This option specifies the external editor Gptcmd uses for commands that require one.
+# If this option is not set, Gptcmd uses Notepad on Windows.
+# On Unix-like systems, Gptcmd uses the default configured editor, typically
+# determined by the EDITOR environment variable.
+# To specify a custom editor, uncomment the line setting the editor option
+# below and set it to an editor of your choice.
+# For example, to use Notepad++ on Windows:
+# editor = "C:\\Program Files (x86)\\Notepad++\\notepad++.exe -multiInst -notabbar -nosession -noPlugin"
+
 # This option controls how Gptcmd handles situations when the user invokes an
 # external editor to add a message but then closes the editor without entering
 # any content.
