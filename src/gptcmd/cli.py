@@ -220,10 +220,14 @@ class Gptcmd(cmd.Cmd):
         if self._detached:
             print(f"({len(self._detached)} detached messages)")
 
-    def _append_new_message(self, arg: str, role: MessageRole):
+    def _append_new_message(
+        self, arg: str, role: MessageRole, _print_on_success: bool = True
+    ) -> Message:
         msg = Message(content=arg, role=role)
         self._current_thread.append(msg)
-        print(self.__class__._fragment("{msg} added as " + role, msg))
+        if _print_on_success:
+            print(self.__class__._fragment("{msg} added as " + role, msg))
+        return msg
 
     def do_user(self, arg):
         """
@@ -366,10 +370,10 @@ class Gptcmd(cmd.Cmd):
         the response.
         example: "say Hello!"
         """
-        self._current_thread.append(
-            Message(content=arg, role=MessageRole.USER)
-        )
-        self.do_send(None)
+        if self._append_new_message(
+            arg, MessageRole.USER, _print_on_success=False
+        ):
+            self.do_send(None)
 
     def do_pop(self, arg):
         """
