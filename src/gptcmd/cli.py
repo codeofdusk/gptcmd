@@ -87,7 +87,9 @@ class Gptcmd(cmd.Cmd):
             else self._current_thread.name
         )
         return self.config.conf["prompt"].format(
-            thread=threadname, model=self._account.provider.model
+            thread=threadname,
+            model=self._account.provider.model,
+            account=self._account.name,
         )
 
     @staticmethod

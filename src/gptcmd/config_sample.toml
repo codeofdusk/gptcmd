@@ -7,6 +7,7 @@ schema_version = "1.0.0"
 # The following keywords (when placed in braces) are replaced by:
 # model: the name of the active model
 # thread: the name of the active thread (if not the detached thread)
+# account: the name of the active account
 # Python escape sequences are supported.
 # Any other characters placed in this string are printed literally.
 prompt = "{thread}({model}) "
