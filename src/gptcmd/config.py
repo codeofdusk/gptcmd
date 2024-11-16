@@ -1,3 +1,4 @@
+import dataclasses
 import os
 import sys
 import platform
@@ -38,6 +39,12 @@ DEFAULT_PROVIDERS: Dict[str, Type[LLMProvider]] = {
 
 class ConfigError(Exception):
     pass
+
+
+@dataclasses.dataclass(frozen=True)
+class Account:
+    name: str
+    provider: LLMProvider
 
 
 class ConfigManager:
@@ -132,7 +139,7 @@ class ConfigManager:
 
     def _configure_accounts(
         self, account_config: Dict, providers: Dict[str, Type[LLMProvider]]
-    ) -> Dict[str, LLMProvider]:
+    ) -> Dict[str, Account]:
         res = {}
         for name, conf in account_config.items():
             if "provider" not in conf:
@@ -143,7 +150,7 @@ class ConfigManager:
                     f"Provider {conf['provider']} is not available. Perhaps"
                     " you need to install it?"
                 )
-            res[name] = provider.from_config(conf)
+            res[name] = Account(name=name, provider=provider.from_config(conf))
         return res
 
     @property

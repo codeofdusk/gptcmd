@@ -71,7 +71,7 @@ class Gptcmd(cmd.Cmd):
         self.thread_cls = thread_cls
         self.last_path = None
         self.config = config or ConfigManager.from_toml()
-        self._llm = self.config.default_account
+        self._account = self.config.default_account
         self._detached = self.thread_cls("*detached*")
         self._current_thread = self._detached
         self._threads = {}
@@ -87,7 +87,7 @@ class Gptcmd(cmd.Cmd):
             else self._current_thread.name
         )
         return self.config.conf["prompt"].format(
-            thread=threadname, model=self._llm.model
+            thread=threadname, model=self._account.provider.model
         )
 
     @staticmethod
@@ -336,7 +336,7 @@ class Gptcmd(cmd.Cmd):
         """
         print("...")
         try:
-            res = self._llm.complete(self._current_thread)
+            res = self._account.provider.complete(self._current_thread)
             self._current_thread.append(res.message)
         except KeyboardInterrupt:
             return
@@ -634,9 +634,9 @@ class Gptcmd(cmd.Cmd):
         example: "model gpt-3.5-turbo"
         """
         if not arg:
-            print(f"Current model: {self._llm.model}")
-        elif arg in self._llm.valid_models:
-            self._llm.model = arg
+            print(f"Current model: {self._account.provider.model}")
+        elif arg in self._account.provider.valid_models:
+            self._account.provider.model = arg
             if _print_on_success:
                 print("OK")
         else:
@@ -649,10 +649,10 @@ class Gptcmd(cmd.Cmd):
         example: "set temperature 0.9"
         """
         if not arg:
-            if not self._llm.api_params:
+            if not self._account.provider.api_params:
                 print("No API parameter definitions")
                 return
-            for k, v in self._llm.api_params.items():
+            for k, v in self._account.provider.api_params.items():
                 print(f"{k}: {repr(v)}")
         else:
             t = arg.split()
@@ -663,7 +663,7 @@ class Gptcmd(cmd.Cmd):
                 print("Invalid syntax")
                 return
             try:
-                validated_val = self._llm.set_api_param(key, val)
+                validated_val = self._account.provider.set_api_param(key, val)
                 print(f"{key} set to {validated_val!r}")
             except InvalidAPIParameterError as e:
                 print(str(e))
@@ -696,16 +696,18 @@ class Gptcmd(cmd.Cmd):
         """
         try:
             if not arg:
-                self._llm.unset_api_param(None)
+                self._account.provider.unset_api_param(None)
                 print("Unset all parameters")
             else:
-                self._llm.unset_api_param(arg)
+                self._account.provider.unset_api_param(arg)
                 print(f"{arg} unset")
         except InvalidAPIParameterError as e:
             print(e)
 
     def complete_unset(self, text, line, begidx, endidx):
-        return self.__class__._complete_from_key(self._llm.api_params, text)
+        return self.__class__._complete_from_key(
+            self._account.provider.api_params, text
+        )
 
     def do_stream(self, arg):
         """
@@ -713,8 +715,8 @@ class Gptcmd(cmd.Cmd):
         generated. This command takes no arguments.
         """
         try:
-            self._llm.stream = not self._llm.stream
-            if self._llm.stream:
+            self._account.provider.stream = not self._account.provider.stream
+            if self._account.provider.stream:
                 print("On")
             else:
                 print("Off")
@@ -735,7 +737,7 @@ class Gptcmd(cmd.Cmd):
             return
         if (
             LLMProviderFeature.MESSAGE_NAME_FIELD
-            not in self._llm.SUPPORTED_FEATURES
+            not in self._account.provider.SUPPORTED_FEATURES
         ):
             print("Name definition not supported")
             return
@@ -762,7 +764,7 @@ class Gptcmd(cmd.Cmd):
         """
         if (
             LLMProviderFeature.MESSAGE_NAME_FIELD
-            not in self._llm.SUPPORTED_FEATURES
+            not in self._account.provider.SUPPORTED_FEATURES
         ):
             print("Name definition not supported")
             return
@@ -811,7 +813,7 @@ class Gptcmd(cmd.Cmd):
             return
         if (
             LLMProviderFeature.MESSAGE_NAME_FIELD
-            not in self._llm.SUPPORTED_FEATURES
+            not in self._account.provider.SUPPORTED_FEATURES
         ):
             print("Name definition not supported")
             return
@@ -1027,11 +1029,11 @@ class Gptcmd(cmd.Cmd):
             msg.attachments.append(img)
             if (
                 not (
-                    "gpt-4-turbo" in self._llm.model
-                    or "gpt-4o" in self._llm.model
-                    or "vision" in self._llm.model
+                    "gpt-4-turbo" in self._account.provider.model
+                    or "gpt-4o" in self._account.provider.model
+                    or "vision" in self._account.provider.model
                 )
-                and "gpt-4-turbo" in self._llm.valid_models
+                and "gpt-4-turbo" in self._account.provider.valid_models
             ):
                 print(
                     "Warning! The selected model may not support vision. "
@@ -1047,20 +1049,18 @@ class Gptcmd(cmd.Cmd):
     def do_account(self, arg):
         "Switch between configured accounts."
         if not arg:
-            active = None
-            others = []
-            for k, v in self.config.accounts.items():
-                if v == self._llm:
-                    active = k
-                else:
-                    others.append(k)
-            print(f"Active account: {active}")
+            others = [
+                v.name
+                for v in self.config.accounts.values()
+                if v != self._account
+            ]
+            print(f"Active account: {self._account.name}")
             if others:
                 print(f"Available accounts: {', '.join(others)}")
             return
         if arg in self.config.accounts:
-            self._llm = self.config.accounts[arg]
-            print(f"Switched to account {arg}")
+            self._account = self.config.accounts[arg]
+            print(f"Switched to account {self._account.name!r}")
         else:
             print(f"{arg} is not configured")
 
