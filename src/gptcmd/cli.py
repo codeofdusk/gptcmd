@@ -980,7 +980,7 @@ class Gptcmd(cmd.Cmd):
                         "{msg} written to " + os.path.abspath(path), msg
                     )
                 )
-        except (OSError, UnicodeDecodeError) as e:
+        except (OSError, UnicodeEncodeError) as e:
             print(str(e))
             return
 
@@ -999,7 +999,7 @@ class Gptcmd(cmd.Cmd):
                     self._current_thread.render(display_indicators=False)
                 )
             print(f"Transcribed to {os.path.abspath(path)}")
-        except (OSError, UnicodeDecodeError) as e:
+        except (OSError, UnicodeEncodeError) as e:
             print(str(e))
             return
 
