@@ -1016,7 +1016,7 @@ class Gptcmd(cmd.Cmd):
                 else self.__class__._user_range_to_python_range(ref)[0]
             )
         except ValueError as e:
-            print(e)
+            print("Invalid message specification")
             return
         if location.startswith("http"):
             img = Image(url=location)
