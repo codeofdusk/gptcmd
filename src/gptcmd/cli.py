@@ -1125,7 +1125,12 @@ class Gptcmd(cmd.Cmd):
                 else self.__class__._user_range_to_python_range(arg)[0]
             )
         except ValueError as e:
-            print("Invalid message specification")
+            print(
+                "Usage: edit[message]\n"
+                "With no argument, the edit command edits the last message. "
+                "With a message number provided as an argument, the edit "
+                "command edits that message."
+            )
             return
         try:
             msg = self._current_thread.messages[idx]
