@@ -56,7 +56,7 @@ The conversation can be cleared with the `clear` command, at which point any pre
 ```
 (gpt-3.5-turbo) clear
 Delete 8 messages? (y/n)y
-OK
+Cleared
 (gpt-3.5-turbo) say What are the next two numbers after that?
 ...
 As an AI language model, I would need more context to provide an accurate answer. Please provide the sequence of numbers or the pattern to continue with.
@@ -503,7 +503,7 @@ print(fibonacci(10))  # Output: 55
 This will output the nth Fibonacci number. In this case, it's the 10th Fibonacci number, which is 55.
 (gpt-3.5-turbo) clear
 Delete 2 messages? (y/n)y
-OK
+Cleared
 (gpt-3.5-turbo) view
 *system: You are a Python programmer. Therefore, when responding, you write in Python source code exclusively.
 ```
@@ -627,7 +627,7 @@ induction(gpt-3.5-turbo) thread
 detached thread
 (gpt-3.5-turbo) clear
 Delete 4 messages? (y/n)y
-OK
+Cleared
 (gpt-3.5-turbo) thread induction2
 Switched to thread 'induction2'
 induction2(gpt-3.5-turbo) copy 1 2

@@ -443,7 +443,7 @@ class Gptcmd(cmd.Cmd):
         can_clear = self.__class__._confirm(f"Delete {length} {mq}?")
         if can_clear:
             self._current_thread.messages = stickys
-            print("OK")
+            print("Cleared")
 
     def do_delete(self, arg):
         """
