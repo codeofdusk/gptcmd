@@ -381,16 +381,20 @@ class MessageThread(Sequence):
         name: str,
         start_index: Optional[int] = None,
         end_index: Optional[int] = None,
-    ):
+    ) -> List[Message]:
         """
         Changes the name set on all non-sticky messages of the specified role
         in this thread. If start_index or end_index is specified, only
         messages in the specified range are affected
         """
+        res = []
         for msg in self._messages[start_index:end_index]:
             if msg.role == role and not msg.sticky:
                 msg.name = name
-                self.dirty = True
+                res.append(msg)
+        if res:
+            self.dirty = True
+        return res
 
     def sticky(
         self, start_index: Optional[int], end_index: Optional[int], state: bool

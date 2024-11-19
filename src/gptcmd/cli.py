@@ -825,10 +825,11 @@ class Gptcmd(cmd.Cmd):
         except ValueError:
             print("Invalid rename range")
             return
-        self._current_thread.rename(
+        t = self._current_thread.rename(
             role=role, name=name, start_index=start, end_index=end
         )
-        print("OK")
+        mp = "message" if len(t) == 1 else "messages"
+        print(f"{len(t)} {mp} renamed")
 
     def complete_rename(self, text, line, begidx, endidx):
         if begidx <= 7:  # In the first argument
