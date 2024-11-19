@@ -474,7 +474,7 @@ Messages can be marked "sticky", so deletion, renaming, and similar modification
 (gpt-3.5-turbo) system You are a Python programmer. Therefore, when responding, you write in Python source code exclusively.
 'You are a Python programmer. Therefore, when responding, you...' added as system
 (gpt-3.5-turbo) sticky .
-OK
+1 message stickied
 ```
 
 Now that the message is sticky, `clear` does not affect it, and its sticky status is indicated by an asterisk:
@@ -519,7 +519,7 @@ The `unsticky` command makes all sticky messages in the specified range no longe
 
 ```
 (gpt-3.5-turbo) unsticky .
-OK
+1 message unstickied
 (gpt-3.5-turbo) pop
 'You are a Python programmer. Therefore, when responding, you write...' deleted
 ```

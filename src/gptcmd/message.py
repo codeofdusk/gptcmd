@@ -394,12 +394,18 @@ class MessageThread(Sequence):
 
     def sticky(
         self, start_index: Optional[int], end_index: Optional[int], state: bool
-    ):
+    ) -> List[Message]:
         """
         Stickys or unstickys (depending on the state parameter) all messages
         in this thread. If start_index or end_index is specified, only
-        messages in the specified range are affected
+        messages in the specified range are affected. Returns a list of
+        messages affected by this operation.
         """
+        res = []
         for m in self._messages[start_index:end_index]:
-            m.sticky = state
+            if m.sticky != state:
+                m.sticky = state
+                res.append(m)
+        if res:
             self.dirty = True
+        return res

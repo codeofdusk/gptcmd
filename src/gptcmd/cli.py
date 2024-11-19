@@ -845,8 +845,9 @@ class Gptcmd(cmd.Cmd):
         except ValueError:
             print("Invalid sticky range")
             return
-        self._current_thread.sticky(start, end, True)
-        print("OK")
+        t = self._current_thread.sticky(start, end, True)
+        mp = "message" if len(t) == 1 else "messages"
+        print(f"{len(t)} {mp} stickied")
 
     def do_unsticky(self, arg):
         """
@@ -859,8 +860,9 @@ class Gptcmd(cmd.Cmd):
         except ValueError:
             print("Invalid unsticky range")
             return
-        self._current_thread.sticky(start, end, False)
-        print("OK")
+        t = self._current_thread.sticky(start, end, False)
+        mp = "message" if len(t) == 1 else "messages"
+        print(f"{len(t)} {mp} unstickied")
 
     def do_save(self, arg):
         """
