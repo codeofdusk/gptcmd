@@ -675,7 +675,7 @@ With no argument, `delete` deletes **all** named threads in this session:
 ```
 (gpt-3.5-turbo) delete
 Delete 1 thread? (y/n)y
-OK
+Deleted
 (gpt-3.5-turbo) threads
 No threads
 (4 detached messages)

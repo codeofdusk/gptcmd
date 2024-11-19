@@ -461,7 +461,7 @@ class Gptcmd(cmd.Cmd):
             if can_delete:
                 self._threads = {}
                 self._current_thread = self._detached
-                print("OK")
+                print("Deleted")
         elif arg in self._threads:
             if self._threads[arg] == self._current_thread:
                 self._current_thread = self._detached
