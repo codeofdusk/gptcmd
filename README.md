@@ -697,7 +697,7 @@ Gptcmd supports a few command line parameters:
 
 ```
 $ gptcmd -h
-usage: gptcmd [-h] [-c CONFIG] [-t THREAD] [-m MODEL] [--version] [path]
+usage: gptcmd [-h] [-c CONFIG] [-t THREAD] [-m MODEL] [-a ACCOUNT] [--version] [path]
 
 positional arguments:
   path                  The path to a JSON file of named threads to load on launch
@@ -710,5 +710,7 @@ options:
                         The name of the thread to switch to on launch
   -m MODEL, --model MODEL
                         The name of the model to switch to on launch
+  -a ACCOUNT, --account ACCOUNT
+                        The name of the account to switch to on launch
   --version             Show version and exit
 ```

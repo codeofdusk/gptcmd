@@ -1048,7 +1048,7 @@ class Gptcmd(cmd.Cmd):
             print("Message doesn't exist")
             return
 
-    def do_account(self, arg):
+    def do_account(self, arg, _print_on_success: bool = True):
         "Switch between configured accounts."
         if not arg:
             others = [
@@ -1062,7 +1062,8 @@ class Gptcmd(cmd.Cmd):
             return
         if arg in self.config.accounts:
             self._account = self.config.accounts[arg]
-            print(f"Switched to account {self._account.name!r}")
+            if _print_on_success:
+                print(f"Switched to account {self._account.name!r}")
         else:
             print(f"{arg} is not configured")
 
@@ -1180,6 +1181,11 @@ def main() -> bool:
         help="The name of the model to switch to on launch",
     )
     parser.add_argument(
+        "-a",
+        "--account",
+        help="The name of the account to switch to on launch",
+    )
+    parser.add_argument(
         "--version", help="Show version and exit", action="store_true"
     )
     args = parser.parse_args()
@@ -1199,6 +1205,8 @@ def main() -> bool:
         shell.do_load(args.path, _print_on_success=False)
     if args.thread:
         shell.do_thread(args.thread, _print_on_success=False)
+    if args.account:
+        shell.do_account(args.account, _print_on_success=False)
     if args.model:
         shell.do_model(args.model, _print_on_success=False)
     shell.cmdloop()
