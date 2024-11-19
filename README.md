@@ -204,7 +204,7 @@ OpenAI's vision model supports messages containing images. The `model` command c
 
 ```
 (gpt-3.5-turbo) model gpt-4-turbo
-OK
+Switched to model 'gpt-4-turbo'
 ```
 
 Images can be attached to messages with the `image` command, which accepts two arguments: the location of the image, either a URL or path to a local file; and the index of the message to which the image should be attached (if unspecified, it defaults to the last). We'll ask GPT to describe an image by creating a user message and attaching an image from Wikimedia Commons:
@@ -420,7 +420,7 @@ GPT allows mesages to be annotated with the name of their author. The `name` com
 
 ```
 (gpt-3.5-turbo) model gpt-4
-OK
+Switched to model 'gpt-4'
 (gpt-4) name user Michael
 user set to 'Michael'
 (gpt-4) say Hello!

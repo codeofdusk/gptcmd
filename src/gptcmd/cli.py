@@ -640,7 +640,7 @@ class Gptcmd(cmd.Cmd):
         elif arg in self._account.provider.valid_models:
             self._account.provider.model = arg
             if _print_on_success:
-                print("OK")
+                print(f"Switched to model {self._account.provider.model!r}")
         else:
             print(f"{arg} is currently unavailable")
 
