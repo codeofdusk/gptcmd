@@ -143,9 +143,6 @@ class OpenAI(LLMProvider):
             + Decimal(sampled_tokens) * sampled_scale
         ) * Decimal("100")
 
-    def _supports_streaming(self) -> bool:
-        return not self.model.startswith("o1")
-
     def complete(self, messages: Sequence[Message]) -> LLMResponse:
         kwargs = {
             "model": self.model,
@@ -222,16 +219,11 @@ class OpenAI(LLMProvider):
 
     @property
     def stream(self) -> bool:
-        return self._supports_streaming() and self._stream
+        return self._stream
 
     @stream.setter
     def stream(self, val: bool):
-        if not self._supports_streaming():
-            raise NotImplementedError(
-                "Streamed responses are not supported by this model"
-            )
-        else:
-            self._stream = val
+        self._stream = val
 
     @property
     def valid_models(self) -> Iterable[str]:
