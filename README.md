@@ -451,11 +451,11 @@ Name annotations are useful for providing one- or multi-shot prompts to GPT, in 
 (gpt-4o) name system example_user
 system set to 'example_user'
 (gpt-4o) system Hello!
-'Hello!' added as system
+'Hello!' added as 'example_user' (system)
 (gpt-4o) name system example_assistant
 system set to 'example_assistant'
 (gpt-4o) system ¡Hola! ¿Cómo estás?
-'¡Hola! ¿Cómo estás?' added as system
+'¡Hola! ¿Cómo estás?' added as 'example_assistant' (system)
 (gpt-4o) view
 system: You are a helpful assistant who understands many languages very well, but can only speak Spanish and therefore you always respond in that language.
 example_user: Hello!

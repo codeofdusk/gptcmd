@@ -251,9 +251,14 @@ class Gptcmd(cmd.Cmd):
                     print("Cancelled")
                     return None
         msg = Message(content=arg, role=role)
+        actor = (
+            f"{self._current_thread.names[role]!r} ({role})"
+            if role in self._current_thread.names
+            else role
+        )
         self._current_thread.append(msg)
         if _print_on_success:
-            print(self.__class__._fragment("{msg} added as " + role, msg))
+            print(self.__class__._fragment("{msg} added as " + actor, msg))
         return msg
 
     def do_user(self, arg):
