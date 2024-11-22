@@ -1013,9 +1013,14 @@ class Gptcmd(cmd.Cmd):
 
     def do_image(self, arg):
         "Attach an image at the specified location"
-        location, ref = re.match(r"^(.*?)(?:\s(-?\d+))?$", arg).groups()
+        USAGE = "Usage: image <location> [message]"
+        m = re.match(r"^(.*?)(?:\s(-?\d+))?$", arg)
+        if not m:
+            print(USAGE)
+            return
+        location, ref = m.groups()
         if not location or location.isspace():
-            print("Usage: image <location> [message]")
+            print(USAGE)
             return
         try:
             idx = (
