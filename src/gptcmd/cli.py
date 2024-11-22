@@ -344,7 +344,6 @@ class Gptcmd(cmd.Cmd):
         print("...")
         try:
             res = self._account.provider.complete(self._current_thread)
-            self._current_thread.append(res.message)
         except KeyboardInterrupt:
             return
         except (CompletionError, NotImplementedError, ValueError) as e:
@@ -359,6 +358,7 @@ class Gptcmd(cmd.Cmd):
         except CompletionError as e:
             print(str(e))
         finally:
+            self._current_thread.append(res.message)
             cost_info = ""
             if res.cost_in_cents is not None:
                 self._session_cost_in_cents += res.cost_in_cents
