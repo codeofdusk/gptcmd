@@ -1023,7 +1023,7 @@ class Gptcmd(cmd.Cmd):
                 if ref is None
                 else self.__class__._user_range_to_python_range(ref)[0]
             )
-        except ValueError as e:
+        except ValueError:
             print("Invalid message specification")
             return
         if location.startswith("http"):
@@ -1132,7 +1132,7 @@ class Gptcmd(cmd.Cmd):
                 if not arg
                 else self.__class__._user_range_to_python_range(arg)[0]
             )
-        except ValueError as e:
+        except ValueError:
             print(
                 "Usage: edit[message]\n"
                 "With no argument, the edit command edits the last message. "
