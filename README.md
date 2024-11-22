@@ -200,35 +200,35 @@ In fact, the `say` command just adds a user message and sends the conversation:
 With no arguments, the `user`, `assistant`, `system`, and `say` commands open an external text editor (based on your system or Gptcmd configuration) for message composition.
 
 ### Working with images
-OpenAI's vision model supports messages containing images. The `model` command can be used to switch the currently active model. We'll use it now to switch to a model with image support. Note that the prompt updates to show the currently selected model:
+OpenAI's vision model supports messages containing images. The `model` command can be used to switch the currently active model. We'll use it now to switch to a model with image support. Note that, by default, the prompt updates to show the currently selected model:
 
 ```
-(gpt-3.5-turbo) model gpt-4-turbo
-Switched to model 'gpt-4-turbo'
+(gpt-3.5-turbo) model gpt-4o
+Switched to model 'gpt-4o'
 ```
 
 Images can be attached to messages with the `image` command, which accepts two arguments: the location of the image, either a URL or path to a local file; and the index of the message to which the image should be attached (if unspecified, it defaults to the last). We'll ask GPT to describe an image by creating a user message and attaching an image from Wikimedia Commons:
 
 ```
-(gpt-4-turbo) user What's in this image?
+(gpt-4o) user What's in this image?
 "What's in this image?" added as user
-(gpt-4-turbo) image https://upload.wikimedia.org/wikipedia/commons/c/ce/Long_cane.jpg
+(gpt-4o) image https://upload.wikimedia.org/wikipedia/commons/c/ce/Long_cane.jpg
 Image added to "What's in this image?"
 ```
 
 When viewing the conversation, an at sign before a message indicates an attachment (multiple at signs indicate multiple attachments):
 
 ```
-(gpt-4-turbo) view
+(gpt-4o) view
 @user: What's in this image?
 ```
 
 Now, we can `send` our message to get a description:
 
 ```
-(gpt-4-turbo) send
+(gpt-4o) send
 ...
-This image shows a white cane, which is a tool commonly used by visually impaired and blind individuals to navigate their environment. The cane has a grip at the top, a long shaft, and a rounded tip at the bottom, which helps detect obstacles and surface textures when it is swept or tapped on the ground. The red section near the bottom of the cane is a common feature to enhance visibility to others.
+This is a white cane, often used by individuals who are blind or visually impaired to aid in mobility and navigation. It has a handle, a long shaft, and a rounded tip.
 ```
 
 ### Managing messages
@@ -328,7 +328,7 @@ Thus, we can conclude that pi is not exactly equal to 3.14628.
 The `edit` command with no arguments opens the contents of the last message in an external text editor for editing. Providing the index of a message to `edit` as an argument edits that message.
 
 ### Message streaming
-The `stream` command toggles OpenAI message streaming. By default, streaming is enabled, so long responses from GPT are output in real time as they are generated. While a message is being streamed, pressing <kbd>Control</kbd>+<kbd>c</kbd> causes Gptcmd to stop waiting for the message to generate fully, so other commands can be used. When streaming is disabled, Gptcmd retrieves an entire response for each query and displays it when it arrives.
+The `stream` command toggles OpenAI message streaming. By default, streaming is enabled, so long responses from GPT are output in real time as they are generated. While a message is being streamed, pressing <kbd>Control</kbd>+<kbd>c</kbd> causes Gptcmd to stop waiting for the message to generate fully, allowing other commands to be used. When streaming is disabled, Gptcmd retrieves an entire response for each query and displays it when it arrives.
 
 ### API parameters
 Gptcmd supports customization of [chat completion API parameters](https://platform.openai.com/docs/api-reference/chat/create), such as `max_tokens` and `temperature`. The `set` command sets an OpenAI API parameter. When setting a parameter, the first argument to `set` is the name of the parameter and the second argument is its value (valid Python literals are supported). A value of `None` is equivalent to sending `null` via the API.
@@ -419,26 +419,26 @@ Unset all parameters
 GPT allows mesages to be annotated with the name of their author. The `name` command sets the name to be sent with all future messages of the specified role. Its first argument is the role to which this new name should be applied, and its second is the name to use:
 
 ```
-(gpt-3.5-turbo) model gpt-4
-Switched to model 'gpt-4'
-(gpt-4) name user Michael
+(gpt-3.5-turbo) model gpt-4o
+Switched to model 'gpt-4o'
+(gpt-4o) name user Michael
 user set to 'Michael'
-(gpt-4) say Hello!
+(gpt-4o) say Hello! What's my name?
 ...
-Hello, Michael! How can I help you today?
+Hello! You mentioned your name is Michael. How can I assist you today?
 ```
 
 With no arguments, `name` shows currently set names:
 
 ```
-(gpt-4) name
+(gpt-4o) name
 user: Michael
 ```
 
 The `unname` command removes a name definition. With a role passed as an argument, it unsets the name definition for that role. With no arguments, it unsets all definitions. However, any previous definitions are unaffected:
 
 ```
-(gpt-4) view
+(gpt-4o) view
 Michael: Hello!
 assistant: Hello, Michael! How can I help you today?
 ```
@@ -446,23 +446,23 @@ assistant: Hello, Michael! How can I help you today?
 Name annotations are useful for providing one- or multi-shot prompts to GPT, in which example user and assistant messages help inform future responses:
 
 ```
-(gpt-4) system You are a helpful assistant who understands many languages very well, but can only speak Spanish and therefore you always respond in that language.
+(gpt-4o) system You are a helpful assistant who understands many languages very well, but can only speak Spanish and therefore you always respond in that language.
 'You are a helpful assistant who understands many languages...' added as system
-(gpt-4) name system example_user
+(gpt-4o) name system example_user
 system set to 'example_user'
-(gpt-4) system Hello!
+(gpt-4o) system Hello!
 'Hello!' added as system
-(gpt-4) name system example_assistant
+(gpt-4o) name system example_assistant
 system set to 'example_assistant'
-(gpt-4) system ¡Hola! ¿Cómo estás?
+(gpt-4o) system ¡Hola! ¿Cómo estás?
 '¡Hola! ¿Cómo estás?' added as system
-(gpt-4) view
+(gpt-4o) view
 system: You are a helpful assistant who understands many languages very well, but can only speak Spanish and therefore you always respond in that language.
 example_user: Hello!
 example_assistant: ¡Hola! ¿Cómo estás?
-(gpt-4) say Qu'est-ce que amazon.com?
+(gpt-4o) say Qu'est-ce que amazon.com?
 ...
-Amazon.com es una tienda en línea que ofrece una amplia variedad de productos como libros, electrónica, ropa, juguetes y más. Es una de las empresas de comercio electrónico más grandes y populares del mundo.
+Amazon.com es una empresa de comercio electrónico y tecnología que ofrece una amplia gama de productos y servicios en línea. Originalmente fundada en 1994 por Jeff Bezos como una librería en línea, Amazon se ha expandido para vender prácticamente de todo, desde electrónica hasta ropa, alimentos y servicios de computación en la nube, como AWS (Amazon Web Services). La empresa también produce dispositivos electrónicos, como el Kindle y dispositivos de la línea Echo con Alexa. Además, Amazon ofrece servicios de transmisión de video y música mediante Amazon Prime Video y Amazon Music, respectivamente.
 ```
 
 The `rename` command changes the name set on existing messages in the conversation. The command has two required arguments and one optional argument: the role to affect, the range of messages to affect, and (optionally) the name to set (if omitted, the name is cleared). For instance, `rename assistant .` clears the name on all assistant messages in the conversation where a name is set, `rename user 1 Paul` sets the name of the first message to "Paul" if it is a user message, and `rename system 2 5 Mitchell` sets the name of all system messages in the second through fifth to "Mitchell".
@@ -483,8 +483,7 @@ Now that the message is sticky, `clear` does not affect it, and its sticky statu
 (gpt-3.5-turbo) say Find the nth fibanacci number.
 ...
 Here's a Python function that returns the nth Fibonacci number:
-```
-```python
+
 def fibonacci(n):
     if n == 0:
         return 0
@@ -492,14 +491,11 @@ def fibonacci(n):
         return 1
     else:
         return fibonacci(n-1) + fibonacci(n-2)
-```
-```
+
 You can call this function with the desired value of n, like this:
-```
-```python
+
 print(fibonacci(10))  # Output: 55
-```
-```
+
 This will output the nth Fibonacci number. In this case, it's the 10th Fibonacci number, which is 55.
 (gpt-3.5-turbo) clear
 Delete 2 messages? (y/n)y
@@ -539,7 +535,7 @@ F(n) = [ (1 + √5)ⁿ - (1 - √5)ⁿ ] / [ 2ⁿ √5 ]
 Switched to new thread 'induction'
 ```
 
-The prompt changes to indicate the current thread, and all messages have been copied:
+By default, the prompt changes to indicate the current thread. All messages have been copied:
 
 ```
 induction(gpt-3.5-turbo) view
