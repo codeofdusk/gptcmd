@@ -19,6 +19,8 @@ from typing import (
 
 if sys.version_info >= (3, 11):
     from enum import StrEnum
+elif sys.version_info >= (3, 8, 6):
+    from backports.strenum import StrEnum
 else:
     from strenum import StrEnum
 
