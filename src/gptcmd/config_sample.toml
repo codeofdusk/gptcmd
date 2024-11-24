@@ -62,7 +62,8 @@ allow_add_empty_messages = "never"
 
 # Within each account section (placed between its header and the next account's header), you can specify the following options:
 
-# provider: Specifies the large language model provider; must be either "openai" or "azure".
+# provider: Specifies the large language model provider; must be "openai",
+# "azure", or the name of an external provider.
 # Example:
 # provider = "openai"
 
