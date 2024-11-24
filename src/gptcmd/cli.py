@@ -117,26 +117,43 @@ class Gptcmd(cmd.Cmd):
     ) -> Tuple[Optional[int], Optional[int]]:
         c = ref.count(" ")
         if c == 0:
+            if ref == ".":
+                return (None, None)
             start = end = ref
         elif c == 1:
             start, end = ref.split()
         else:
             raise ValueError("Wrong number of indices")
+
         if start == ".":
             py_start = None
         else:
             py_start = int(start)
+            if py_start > 0:
+                py_start -= 1  # Python indices are zero-based
         if end == ".":
             py_end = None
         else:
             py_end = int(end)
-        if py_start is not None and py_start > 0:
-            py_start -= 1
-        if py_start is not None and py_start < 0 and py_start == py_end:
-            # In Python, specifying a negative index twice returns an empty
-            # slice. Unset the end to maintain parity with positive indexing.
-            py_end = None
-        return (py_start, py_end)
+            if py_end > 0:
+                py_end -= 1  # Python indices are zero-based
+                py_end += 1  # Python indices are end exclusive
+            elif py_end == -1:
+                py_end = None
+            else:
+                py_end += 1  # Python indices are end exclusive
+
+        if c == 0:
+            # Don't return an empty range
+            if py_start == -1:
+                py_end = None
+            elif py_start is not None:
+                py_end = py_start + 1
+
+        if py_start is not None and py_end is not None and py_start >= py_end:
+            raise ValueError("Range end is beyond its start")
+
+        return py_start, py_end
 
     @staticmethod
     def _confirm(prompt: str) -> bool:
