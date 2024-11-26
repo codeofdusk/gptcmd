@@ -1,3 +1,12 @@
+"""
+This module contains the LLMProvider class and supporting infrastructure.
+Copyright 2024 Bill Dengler
+This Source Code Form is subject to the terms of the Mozilla Public
+License, v. 2.0. If a copy of the MPL was not distributed with this
+file, You can obtain one at https://mozilla.org/MPL/2.0/.
+"""
+
+
 import dataclasses
 from abc import ABC, abstractmethod
 from decimal import Decimal
@@ -14,15 +23,6 @@ from typing import (
 )
 
 from ..message import Message, MessageAttachment, UnknownAttachment
-
-
-"""
-This module contains the LLMProvider class and supporting infrastructure.
-Copyright 2024 Bill Dengler
-This Source Code Form is subject to the terms of the Mozilla Public
-License, v. 2.0. If a copy of the MPL was not distributed with this
-file, You can obtain one at https://mozilla.org/MPL/2.0/.
-"""
 
 
 @dataclasses.dataclass

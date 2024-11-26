@@ -1,3 +1,13 @@
+"""
+This module contains the Gptcmd class and serves as an entry point to the
+Gptcmd command line application.
+Copyright 2024 Bill Dengler
+This Source Code Form is subject to the terms of the Mozilla Public
+License, v. 2.0. If a copy of the MPL was not distributed with this
+file, You can obtain one at https://mozilla.org/MPL/2.0/.
+"""
+
+
 import argparse
 import cmd
 import dataclasses
@@ -27,16 +37,6 @@ from .message import (
     MessageThread,
     PopStickyMessageError,
 )
-
-
-"""
-This module contains the Gptcmd class and serves as an entry point to the
-Gptcmd command line application.
-Copyright 2023 Bill Dengler
-This Source Code Form is subject to the terms of the Mozilla Public
-License, v. 2.0. If a copy of the MPL was not distributed with this
-file, You can obtain one at https://mozilla.org/MPL/2.0/.
-"""
 
 
 __version__ = "2.0.0"

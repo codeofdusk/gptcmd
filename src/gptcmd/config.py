@@ -1,3 +1,13 @@
+"""
+This module contains the ConfigManager class, which controls Gptcmd's
+config system.
+Copyright 2024 Bill Dengler
+This Source Code Form is subject to the terms of the Mozilla Public
+License, v. 2.0. If a copy of the MPL was not distributed with this
+file, You can obtain one at https://mozilla.org/MPL/2.0/.
+"""
+
+
 import dataclasses
 import os
 import sys
@@ -19,16 +29,6 @@ else:
 
 from .llm import LLMProvider
 from .llm.openai import AzureAI, OpenAI
-
-
-"""
-This module contains the ConfigManager class, which controls Gptcmd's
-config system.
-Copyright 2024 Bill Dengler
-This Source Code Form is subject to the terms of the Mozilla Public
-License, v. 2.0. If a copy of the MPL was not distributed with this
-file, You can obtain one at https://mozilla.org/MPL/2.0/.
-"""
 
 
 DEFAULT_PROVIDERS: Dict[str, Type[LLMProvider]] = {

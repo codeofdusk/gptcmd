@@ -1,3 +1,13 @@
+"""
+This module contains classes and types for interacting with messages and
+message threads.
+Copyright 2024 Bill Dengler
+This Source Code Form is subject to the terms of the Mozilla Public
+License, v. 2.0. If a copy of the MPL was not distributed with this
+file, You can obtain one at https://mozilla.org/MPL/2.0/.
+"""
+
+
 import base64
 import dataclasses
 import mimetypes
@@ -23,16 +33,6 @@ elif sys.version_info >= (3, 8, 6):
     from backports.strenum import StrEnum
 else:
     from strenum import StrEnum
-
-
-"""
-This module contains classes and types for interacting with messages and
-message threads.
-Copyright 2023 Bill Dengler
-This Source Code Form is subject to the terms of the Mozilla Public
-License, v. 2.0. If a copy of the MPL was not distributed with this
-file, You can obtain one at https://mozilla.org/MPL/2.0/.
-"""
 
 
 T = TypeVar("T")
