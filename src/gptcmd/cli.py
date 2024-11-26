@@ -4,6 +4,7 @@ import dataclasses
 import json
 import os
 import re
+import shlex
 import subprocess
 import sys
 import tempfile
@@ -892,6 +893,10 @@ class Gptcmd(cmd.Cmd):
         Save all named threads to the specified json file. With no argument,
         save to the most recently loaded/saved JSON file in this session.
         """
+        args = shlex.split(arg)
+        if len(args) > 1:
+            print("Usage: save [path]")
+            return
         if self._detached.dirty:
             print(
                 f"Warning: {len(self._detached)} detached messages will not"
@@ -901,24 +906,26 @@ class Gptcmd(cmd.Cmd):
         if not self._threads:
             print("No threads to save!")
             return
-        if not arg:
+        if not args:
             if self.last_path is None:
                 print("No file specified")
                 return
-            arg = self.last_path
+            path = self.last_path
+        else:
+            path = args[0]
         res = {}
         res["_meta"] = {"version": __version__}
         res["threads"] = {k: v.to_dict() for k, v in self._threads.items()}
         try:
-            with open(arg, "w", encoding="utf-8") as cam:
+            with open(path, "w", encoding="utf-8") as cam:
                 json.dump(res, cam, indent=2)
         except (OSError, UnicodeEncodeError) as e:
             print(str(e))
             return
         for thread in self._threads.values():
             thread.dirty = False
-        print(f"{os.path.abspath(arg)} saved")
-        self.last_path = arg
+        print(f"{os.path.abspath(path)} saved")
+        self.last_path = path
 
     def do_load(self, arg, _print_on_success=True):
         "Load all threads from the specified json file."
@@ -926,7 +933,16 @@ class Gptcmd(cmd.Cmd):
             print("Usage: load <path>\n")
             return
         try:
-            with open(arg, encoding="utf-8") as fin:
+            args = shlex.split(arg)
+        except ValueError as e:
+            print(e)
+            return
+        if len(args) != 1:
+            print("Usage: load <path>")
+            return
+        path = args[0]
+        try:
+            with open(path, encoding="utf-8") as fin:
                 d = json.load(fin)
         except (
             FileNotFoundError,
@@ -970,7 +986,11 @@ class Gptcmd(cmd.Cmd):
         the specified role (second argument).
         example: "read /path/to/prompt.txt system"
         """
-        args = arg.split()
+        try:
+            args = shlex.split(arg)
+        except ValueError as e:
+            print(e)
+            return
         if len(args) < 2 or not self.__class__._validate_role(args[-1]):
             print(
                 f"Usage: read <path> <{'|'.join(self.__class__.KNOWN_ROLES)}>"
@@ -991,11 +1011,17 @@ class Gptcmd(cmd.Cmd):
         if begidx > 5:  # Passed the first argument
             return self.__class__._complete_role(text)
 
-    def do_write(self, path):
+    def do_write(self, arg):
         "Write the contents of the last message to the specified file."
-        if not path:
+        try:
+            args = shlex.split(arg)
+        except ValueError as e:
+            print(e)
+            return
+        if len(args) != 1:
             print("Usage: write <path>")
             return
+        path = args[0]
         try:
             with open(path, "w", encoding="utf-8", errors="ignore") as cam:
                 msg = self._current_thread.messages[-1]
@@ -1013,11 +1039,20 @@ class Gptcmd(cmd.Cmd):
         if begidx > 6:  # Passed the first argument
             return self.__class__._complete_role(text)
 
-    def do_transcribe(self, path):
+    def do_transcribe(self, arg):
         """
         Write the entire thread (as a human-readable transcript) to the
         specified file.
         """
+        try:
+            args = shlex.split(arg)
+        except ValueError as e:
+            print(e)
+            return
+        if len(args) != 1:
+            print("Usage: transcribe <path>")
+            return
+        path = args[0]
         try:
             with open(path, "w", encoding="utf-8", errors="ignore") as cam:
                 cam.write(
@@ -1052,8 +1087,8 @@ class Gptcmd(cmd.Cmd):
             img = Image(url=location)
         else:
             try:
-                img = Image.from_path(location)
-            except (OSError, FileNotFoundError) as e:
+                img = Image.from_path(shlex.split(location)[0])
+            except (OSError, FileNotFoundError, ValueError) as e:
                 print(e)
                 return
         try:
