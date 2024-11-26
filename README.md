@@ -1,12 +1,12 @@
 # Gptcmd
-Gptcmd allows you to interact with OpenAI's chat-based models, such as `gpt-4o`, efficiently in your terminal. Gptcmd can manage multiple concurrent "threads" of conversation, allowing for free and easy prompt experimentation and iteration. Individual messages can be manipulated, loaded from, and saved to files (both plain text and JSON), and API parameters are fully customizable. In short, Gptcmd is simple yet flexible, useful for both basic conversation and more involved prototyping.
+Gptcmd allows you to interact with large language models, such as OpenAI's GPT, efficiently in your terminal. Gptcmd can manage multiple concurrent "threads" of conversation, allowing for free and easy prompt experimentation and iteration. Individual messages can be manipulated, loaded from, and saved to files (both plain text and JSON), and API parameters are fully customizable. In short, Gptcmd is simple yet flexible, useful for both basic conversation and more involved prototyping.
 
 ## Getting started
 Gptcmd requires [Python](https://python.org) 3.7.1. Python 3.8.6 or later is strongly recommended and will be required to run future releases. Gptcmd is available on PyPI, and can, for instance, be installed with `pip install gptcmd` at a command line shell. Running `gptcmd` at a shell starts the application. If Python's `bin` or `scripts` directory isn't on your path, you may need to launch the application with a command like `~/.local/bin/gptcmd` (depending on your system configuration). In most cases though, `gptcmd` should "just work".
 
-If you don't have an OpenAI account, you'll need to create one and [add your credit card](https://platform.openai.com/account/billing/overview). To manage costs, you can [set a monthly hard limit](https://platform.openai.com/account/billing/limits) ($5 or so goes very far, especially on `gpt-4o-mini`).
+If you'd like to use OpenAI models and you don't have an OpenAI account, you'll need to create one and [add some credit](https://platform.openai.com/account/billing/overview). $5 or so goes very far, especially on `gpt-4o-mini`.
 
-Gptcmd searches for an OpenAI API key in its configuration file, falling back to the `OPENAI_API_KEY` environment variable if no key is provided in its configuration. If you don't have an API key, you'll need to [generate a key](https://beta.openai.com/account/api-keys).
+Gptcmd searches for provider credentials in its configuration file, falling back to the `OPENAI_API_KEY` environment variable if no key is provided in its configuration. If you'd like to use OpenAI models and you don't have an API key, you'll need to [generate a key](https://platform.openai.com/account/api-keys).
 
 Once Gptcmd starts, it presents a prompt containing the name of the currently active model and waits for user input. Running the `quit` command (typing `quit` at the prompt and pressing <kbd>Return</kbd>) exits the program.
 
@@ -24,93 +24,88 @@ Other | `$XDG_CONFIG_HOME/gptcmd/config.toml` or `~/.config/gptcmd/config.toml`
 You may open Gptcmd's configuration file in a text editor to change application settings. The file contains comments that describe the available options. Configuration changes will be applied the next time Gptcmd is restarted.
 
 ### Simple conversation
-The `say` command sends a message to GPT:
+The `say` command sends a message to the model:
 
 ```
-(gpt-3.5-turbo) say Hello, world!
+(gpt-4o) say Hello, world!
 ...
-Hello there! How can I assist you today?
+Hello! How can I assist you today?
 ```
 
 Gptcmd sends the entire conversation every time, never deleting history unless told to do so.
 
 ```
-(gpt-3.5-turbo) say I'm good! How are you?
+(gpt-4o) say I'm good! How are you?
 ...
-As an AI language model, I don't have feelings but I'm functioning properly. How may I assist you today?
-(gpt-3.5-turbo) say That's alright. Count from 1 to 5.
+I'm just a program, so I don't have feelings, but I'm here and ready to help you with anything you need!
+(gpt-4o) say That's alright. Count from 1 to 5.
 ...
-Sure, here it is:
-1
-2
-3
-4
-5
-(gpt-3.5-turbo) say What are the next two numbers after that?
+Sure! Here you go: 1, 2, 3, 4, 5.
+(gpt-4o) say What are the next two numbers after that?
 ...
-The next two numbers after 5 are 6 and 7.
+The next two numbers are 6 and 7.
 ```
 
-The conversation can be cleared with the `clear` command, at which point any previous context will no longer be made available to GPT:
+The conversation can be cleared with the `clear` command, at which point any previous context will no longer be made available to the model:
 
 ```
-(gpt-3.5-turbo) clear
+(gpt-4o) clear
 Delete 8 messages? (y/n)y
 Cleared
-(gpt-3.5-turbo) say What are the next two numbers after that?
+(gpt-4o) say What are the next two numbers after that?
 ...
-As an AI language model, I would need more context to provide an accurate answer. Please provide the sequence of numbers or the pattern to continue with.
+I apologize, but your request is unclear. Could you please provide more information or context? For example, if you're referring to a numerical pattern or sequence, sharing the sequence would help me assist you better.
 ```
 
 ### Viewing messages
 The `first` and `last` commands view the first and last messages in the conversation respectively:
 
 ```
-(gpt-3.5-turbo) say Write a limerick about generative AI.
+(gpt-4o) say Write a limerick about generative AI.
 ...
-There once was a generative AI
-Whose skills could surely apply
-With patterns and sequences
-It made new appearances
-And impressed us with each new try
-(gpt-3.5-turbo) first
+In the land of the silicon chip,  
+Generative AI took a trip.  
+With words it would play,  
+In a curious way,  
+Creating tales at the click of a lip.
+(gpt-4o) first
 user: What are the next two numbers after that?
-(gpt-3.5-turbo) last
-assistant: There once was a generative AI
-Whose skills could surely apply
-With patterns and sequences
-It made new appearances
-And impressed us with each new try
+(gpt-4o) last
+assistant: In the land of the silicon chip,  
+Generative AI took a trip.  
+With words it would play,  
+In a curious way,  
+Creating tales at the click of a lip.
 ```
 
 Providing an integer k as an argument shows the first/last k messages:
 
 ```
-(gpt-3.5-turbo) first 2
+(gpt-4o) first 2
 user: What are the next two numbers after that?
-assistant: As an AI language model, I would need more context to provide an accurate answer. Please provide the sequence of numbers or the pattern to continue with.
-(gpt-3.5-turbo) last 3
-assistant: As an AI language model, I would need more context to provide an accurate answer. Please provide the sequence of numbers or the pattern to continue with.
+assistant: I apologize, but your request is unclear. Could you please provide more information or context? For example, if you're referring to a numerical pattern or sequence, sharing the sequence would help me assist you better.
+(gpt-4o) last 3
+assistant: I apologize, but your request is unclear. Could you please provide more information or context? For example, if you're referring to a numerical pattern or sequence, sharing the sequence would help me assist you better.
 user: Write a limerick about generative AI.
-assistant: There once was a generative AI
-Whose skills could surely apply
-With patterns and sequences
-It made new appearances
-And impressed us with each new try
+assistant: In the land of the silicon chip,
+Generative AI took a trip.
+With words it would play,
+In a curious way,
+Creating tales at the click of a lip.
 ```
 
 The `view` command shows the entire conversation:
 
 ```
-(gpt-3.5-turbo) view
+(gpt-4o) view
 user: What are the next two numbers after that?
-assistant: As an AI language model, I would need more context to provide an accurate answer. Please provide the sequence of numbers or the pattern to continue with.
+assistant: I apologize, but your request is unclear. Could you please provide more information or context? For example, if you're referring to a numerical pattern or sequence, sharing the sequence would help me assist you better.
 user: Write a limerick about generative AI.
-assistant: There once was a generative AI
-Whose skills could surely apply
-With patterns and sequences
-It made new appearances
-And impressed us with each new try
+assistant: In the land of the silicon chip,
+Generative AI took a trip.
+With words it would play,
+In a curious way,
+Creating tales at the click of a lip.
 ```
 
 ### Message ranges
@@ -119,95 +114,94 @@ Various Gptcmd commands work over ranges of messages in a conversation. Ranges a
 The `view` command accepts a range of messages as an argument. When supplied, it only shows messages in the indicated range. Some example message range specifications follow:
 
 ```
-(gpt-3.5-turbo) view 1
+(gpt-4o) view 1
 user: What are the next two numbers after that?
-(gpt-3.5-turbo) view 2
-assistant: As an AI language model, I would need more context to provide an accurate answer. Please provide the sequence of numbers or the pattern to continue with.
-(gpt-3.5-turbo) view 2 3
-assistant: As an AI language model, I would need more context to provide an accurate answer. Please provide the sequence of numbers or the pattern to continue with.
+(gpt-4o) view 2
+assistant: I apologize, but your request is unclear. Could you please provide more information or context? For example, if you're referring to a numerical pattern or sequence, sharing the sequence would help me assist you better.
+(gpt-4o) view 2 3
+assistant: I apologize, but your request is unclear. Could you please provide more information or context? For example, if you're referring to a numerical pattern or sequence, sharing the sequence would help me assist you better.
 user: Write a limerick about generative AI.
-(gpt-3.5-turbo) view -1
-assistant: There once was a generative AI
-Whose skills could surely apply
-With patterns and sequences
-It made new appearances
-And impressed us with each new try
-(gpt-3.5-turbo) view 3 .
+(gpt-4o) view -1
+assistant: In the land of the silicon chip,
+Generative AI took a trip.
+With words it would play,
+In a curious way,
+Creating tales at the click of a lip.
+(gpt-4o) view 3 .
 user: Write a limerick about generative AI.
-assistant: There once was a generative AI
-Whose skills could surely apply
-With patterns and sequences
-It made new appearances
-And impressed us with each new try
-(gpt-3.5-turbo) view .
+assistant: In the land of the silicon chip,
+Generative AI took a trip.
+With words it would play,
+In a curious way,
+Creating tales at the click of a lip.
+(gpt-4o) view .
 user: What are the next two numbers after that?
-assistant: As an AI language model, I would need more context to provide an accurate answer. Please provide the sequence of numbers or the pattern to continue with.
+assistant: I apologize, but your request is unclear. Could you please provide more information or context? For example, if you're referring to a numerical pattern or sequence, sharing the sequence would help me assist you better.
 user: Write a limerick about generative AI.
-assistant: There once was a generative AI
-Whose skills could surely apply
-With patterns and sequences
-It made new appearances
-And impressed us with each new try
+assistant: In the land of the silicon chip,
+Generative AI took a trip.
+With words it would play,
+In a curious way,
+Creating tales at the click of a lip.
 ```
 
 ### Conversation roles
-OpenAI's API supports messages of three "roles": user, representing the end-user; assistant, representing the GPT AI; and system, used to inform the AI's behaviour. System messages can be appended to the conversation with the `system` command:
+Gptcmd messages can have one of three "roles": user, representing the end-user; assistant, representing the large language model; and system, used to inform the model's behaviour. System messages can be appended to the conversation with the `system` command:
 
 ```
-(gpt-3.5-turbo) system As a philosophical proof assistant, you prefer to use the technique of proof by contradiction at any opportunity. Therefore, whenever you are asked to prove something, you first assume that the proposition is false, then given this assumption, you attempt to find a contradiction.
+(gpt-4o) system As a philosophical proof assistant, you prefer to use the technique of proof by contradiction at any opportunity. Therefore, whenever you are asked to prove something, you first assume that the proposition is false, then given this assumption, you attempt to find a contradiction.
 'As a philosophical proof assistant, you prefer to use the...' added as system
-(gpt-3.5-turbo) say Prove that all cacti are succulents.
+(gpt-4o) say Prove that all cacti are succulents.
 ...
-To prove that all cacti are succulents, we will use proof by contradiction. We will assume that there exists a cactus that is not a succulent and show that this leads to a contradiction.
+To prove that all cacti are succulents, let's employ proof by contradiction. We begin by assuming the opposite of what we want to prove—that not all cacti are succulents. This assumption asserts that there is at least one cactus that is not a succulent.
 
-Assume that there exists a cactus that is not a succulent. This means that there is a cactus that does not have the characteristic of storing water in its stems or leaves.
+Now, let's examine the definitions involved:
 
-However, it is well-known that all cacti have the characteristic of storing water in their stems or leaves, as this is an essential adaptation for surviving in arid environments. Therefore, our assumption that there exists a cactus that is not a succulent is false.
+1. **Cactus**: A cactus is a type of plant belonging to the family Cactaceae, which is well-adapted to arid environments. Cacti typically have thick, fleshy parts that store water, and they often have needles instead of leaves.
 
-Since we have shown that the assumption that there exists a cactus that is not a succulent leads to a contradiction, we can conclude that all cacti are succulents.
+2. **Succulent**: A succulent is a plant that has thick, fleshy parts developed to retain water in arid climates or soil conditions. This is a broader category that includes many different plant families, including Cactaceae.
+
+Under our assumption, there exists a cactus that does not fit the definition of a succulent. In other words, this hypothetical cactus would not be adapted for water storage, lacking the thick, fleshy parts that characterize succulents. However, such characteristics are fundamental to the biological adaptation seen in all cacti, given their native environments, which require water conservation.
+
+Thus, the assumption leads to a contradiction with the basic biological characteristics and adaptations of cacti. As all known cacti possess the necessary attributes to be classified as succulents, our assumption is false.
+
+Therefore, we conclude that all cacti are indeed succulents.
 ```
 
-Similarly, user and assistant messages can be added with the `user` and `assistant` commands respectively. Since GPT itself is agnostic of the source of messages (i.e. it doesn't track its own responses and expects downstream applications to manage context), Gptcmd allows you to inject your own arbitrary conversation history to which GPT can respond:
+Similarly, user and assistant messages can be added with the `user` and `assistant` commands respectively. Since models like GPT are agnostic of the source of messages (i.e. they don't track their own responses and expect downstream applications to manage context), Gptcmd allows you to inject your own arbitrary conversation history to which the model can respond:
 
 ```
-(gpt-3.5-turbo) user What are the first five Fibanacci numbers?
+(gpt-4o) user What are the first five Fibonacci numbers?
 'What are the first five Fibanacci numbers?' added as user
-(gpt-3.5-turbo) assistant 1, 1, 2, 3, 5.
+(gpt-4o) assistant 1, 1, 2, 3, 5.
 '1, 1, 2, 3, 5.' added as assistant
-(gpt-3.5-turbo) say And the next five?
+(gpt-4o) say And the next five?
 ...
-8, 13, 21, 34, 55.
+The next five Fibonacci numbers after 1, 1, 2, 3, 5 are 8, 13, 21, 34, and 55.
 ```
 
-The `send` command sends the conversation in its current state to GPT and requests a response:
+The `send` command sends the conversation in its current state to the model and requests a response:
 
 ```
-(gpt-3.5-turbo) user What are the first ten digits of pi?
+(gpt-4o) user What are the first ten digits of pi?
 'What are the first ten digits of pi?' added as user
-(gpt-3.5-turbo) send
+(gpt-4o) send
 ...
-3.141592653
+The first ten digits of pi are 3.141592653.
 ```
 
 In fact, the `say` command just adds a user message and sends the conversation:
 
 ```
-(gpt-3.5-turbo) say What are the first ten digits of pi?
+(gpt-4o) say What are the first ten digits of pi?
 ...
-3.141592653
+The first ten digits of pi are 3.141592653.
 ```
 
 With no arguments, the `user`, `assistant`, `system`, and `say` commands open an external text editor (based on your system or Gptcmd configuration) for message composition.
 
 ### Working with images
-OpenAI's vision model supports messages containing images. The `model` command can be used to switch the currently active model. We'll use it now to switch to a model with image support. Note that, by default, the prompt updates to show the currently selected model:
-
-```
-(gpt-3.5-turbo) model gpt-4o
-Switched to model 'gpt-4o'
-```
-
-Images can be attached to messages with the `image` command, which accepts two arguments: the location of the image, either a URL or path to a local file; and the index of the message to which the image should be attached (if unspecified, it defaults to the last). We'll ask GPT to describe an image by creating a user message and attaching an image from Wikimedia Commons:
+OpenAI's latest models, such as `gppt-4o`, support images alongside text content. Images can be attached to messages with the `image` command, which accepts two arguments: the location of the image, either a URL or path to a local file; and the index of the message to which the image should be attached (if unspecified, it defaults to the last). We'll ask GPT to describe an image by creating a user message and attaching an image from Wikimedia Commons:
 
 ```
 (gpt-4o) user What's in this image?
@@ -235,34 +229,31 @@ This is a white cane, often used by individuals who are blind or visually impair
 The `pop` command with no argument deletes the last message of a conversation:
 
 ```
-(gpt-3.5-turbo) say Tell me a female given name.
+(gpt-4o) pop
+'Alice.' deleted
+(gpt-4o) send
 ...
-Sophia.
-(gpt-3.5-turbo) pop
+Sophia
+(gpt-4o) pop
 'Sophia' deleted
-(gpt-3.5-turbo) send
+(gpt-4o) send
 ...
-Lila
-(gpt-3.5-turbo) pop
-'Lila' deleted
-(gpt-3.5-turbo) send
-...
-Emily.
-(gpt-3.5-turbo) view
-user: Tell me a female given name.
-assistant: Emily.
+Emily
+(gpt-4o) view
+user: Responding with only one word, tell me a female given name.
+assistant: Emily
 ```
 
-Deleting the last message and resending the conversation is a very common action while experimenting with GPT models, so Gptcmd includes a shortcut: the `retry` command:
+Deleting the last message and resending the conversation is a very common action while experimenting with large language models, so Gptcmd includes a shortcut: the `retry` command:
 
 ```
-(gpt-3.5-turbo) say Tell me a male given name.
+(gpt-4o) say Responding with only one word, tell me a male given name.
 ...
 David
-(gpt-3.5-turbo) retry
+(gpt-4o) retry
 ...
 John
-(gpt-3.5-turbo) retry
+(gpt-4o) retry
 ...
 William
 ```
@@ -270,15 +261,15 @@ William
 Providing the index of a single message as an argument to `pop` deletes the specified message:
 
 ```
-(gpt-3.5-turbo) user abc
+(gpt-4o) user abc
 'abc' added as user
-(gpt-3.5-turbo) user def
+(gpt-4o) user def
 'def' added as user
-(gpt-3.5-turbo) user ghi
+(gpt-4o) user ghi
 'ghi' added as user
-(gpt-3.5-turbo) pop 2
+(gpt-4o) pop 2
 'def' deleted
-(gpt-3.5-turbo) view
+(gpt-4o) view
 user: abc
 user: ghi
 ```
@@ -286,49 +277,58 @@ user: ghi
 The `move` command moves the message at the start of a range to the end of that range. This is often useful for adding a system message to conversations that previously didn't have one:
 
 ```
-(gpt-3.5-turbo) say Prove that pi is not exactly equal to 3.14628.
+(gpt-4o) say Prove that pi is not exactly equal to 3.14628 without the use of any mathematical symbols.
 ...
-Pi is a mathematical constant representing the ratio of a circle's circumference to its diameter. Its decimal representation goes on infinitely without repeating. The first few digits of pi are 3.14159... and not 3.14628.
+To demonstrate that pi is not exactly equal to three point one four six two eight, we can refer to the nature of pi and how it has been studied and understood throughout history.
 
-One way to prove that pi is not exactly equal to 3.14628 is to show that the difference between the two values is non-zero.
+Pi is defined as the ratio of the circumference of a circle to its diameter. It is known to be an irrational number, meaning it cannot be exactly expressed as a finite decimal or a fraction with whole numbers. This characteristic implies that it has an infinite and non-repeating decimal expansion. Historical effort has been put into calculating the digits of pi, revealing many digits beyond the decimal point.
 
-Let's subtract 3.14628 from pi:
+While three point one four six two eight might appear to be close to pi, it is only an approximation. The actual digits of pi, after the well-known initial digits three point one four, continue as one five nine two six five and so forth. Since pi is irrational, its decimal representation is infinite and non-repeating, and cannot completely coincide with any finite number, no matter how many digits it contains.
 
-pi - 3.14628 = 3.14159... - 3.14628 = -0.00469...
-
-The result is a negative number, which means that pi is smaller than 3.14628. Therefore, pi cannot be exactly equal to 3.14628.
-
-We can also use the fact that pi is an irrational number, which means that it cannot be expressed as a simple fraction or a finite decimal. In other words, pi cannot be written as a terminating or repeating decimal like 3.14628.
-
-Therefore, we can conclude that pi is not exactly equal to 3.14628.
-(gpt-3.5-turbo) first
-user: Prove that pi is not exactly equal to 3.14628.
-(gpt-3.5-turbo) system As a philosophical proof assistant, you prefer to use the technique of proof by contradiction at any opportunity. Therefore, whenever you are asked to prove something, you first assume that the proposition is false, then given this assumption, you attempt to find a contradiction.
+Thus, because three point one four six two eight ends after five decimal places and pi does not, we conclude that they cannot be exactly equal.
+(gpt-4o) first
+user: Prove that pi is not exactly equal to 3.14628 without the use of any mathematical symbols.
+(gpt-4o) system As a philosophical proof assistant, you prefer to use the technique of proof by contradiction at any opportunity. Therefore, whenever you are asked to prove something, you first assume that the proposition is false, then given this assumption, you attempt to find a contradiction.
 'As a philosophical proof assistant, you prefer to use the...' added as system
-(gpt-3.5-turbo) move -1 1
-'As a philosophical proof assistant, you prefer to use the...' moved to start
-(gpt-3.5-turbo) view 1 2
+(gpt-4o) move -1 1
+'As a philosophical proof assistant, you prefer to use the technique...' moved to start
+(gpt-4o) view 1 2
 system: As a philosophical proof assistant, you prefer to use the technique of proof by contradiction at any opportunity. Therefore, whenever you are asked to prove something, you first assume that the proposition is false, then given this assumption, you attempt to find a contradiction.
-user: Prove that pi is not exactly equal to 3.14628.
-(gpt-3.5-turbo) pop 3
-"Pi is a mathematical constant representing the ratio of a circle's..." deleted
-(gpt-3.5-turbo) send
+user: Prove that pi is not exactly equal to 3.14628 without the use of any mathematical symbols.
+(gpt-4o) pop 3
+'To demonstrate that pi is not exactly equal to three point one four...' deleted
+(gpt-4o) send
 ...
-Assume that pi is exactly equal to 3.14628.
+To prove that pi is not exactly equal to three point one four six two eight, we begin with the assumption that pi is indeed exactly three point one four six two eight. Given this assumption, we need to find a contradiction.
 
-However, we know that pi is a mathematical constant that represents the ratio of a circle's circumference to its diameter. This means that pi is an irrational number, which cannot be expressed as a finite decimal or fraction.
+Let's recall the nature of pi. By definition, pi is the ratio of the circumference of a circle to its diameter in Euclidean space, and it is known to be an irrational number. An irrational number is one that cannot be expressed as the exact quotient of two integers, meaning it has a non-repeating, non-terminating decimal expansion.
 
-But 3.14628 is a finite decimal, which means it cannot represent the irrational number pi exactly.
+Now, consider the number three point one four six two eight. This number is clearly a rational number because it can be expressed as the fraction thirty one thousand four hundred sixty-two and eight ten-thousandths. Since three point one four six two eight is a terminating decimal, it can be expressed precisely as the division of two integers.
 
-Therefore, our assumption that pi is exactly equal to 3.14628 leads to a contradiction.
+If pi were equal to three point one four six two eight, then pi would be rational. However, this contradicts the well-established fact that pi is irrational. This contradiction implies that our initial assumption must be false.
 
-Thus, we can conclude that pi is not exactly equal to 3.14628.
+Therefore, we conclude that pi is not exactly equal to three point one four six two eight.
 ```
 
 The `edit` command with no arguments opens the contents of the last message in an external text editor for editing. Providing the index of a message to `edit` as an argument edits that message.
 
 ### Message streaming
-The `stream` command toggles OpenAI message streaming. By default, streaming is enabled, so long responses from GPT are output in real time as they are generated. While a message is being streamed, pressing <kbd>Control</kbd>+<kbd>c</kbd> causes Gptcmd to stop waiting for the message to generate fully, allowing other commands to be used. When streaming is disabled, Gptcmd retrieves an entire response for each query and displays it when it arrives.
+The `stream` command toggles message streaming. By default, streaming is enabled, so long responses from the language model are output in real time as they are generated. While a message is being streamed, pressing <kbd>Control</kbd>+<kbd>c</kbd> causes Gptcmd to stop waiting for the message to generate fully, allowing other commands to be used. When streaming is disabled, Gptcmd retrieves an entire response for each query and displays it when it arrives.
+
+### Model selection
+The `model` command switches the active model. For instance, we can switch to `gpt-4o-mini`, a smaller, cheaper model offered by OpenAI:
+
+```
+(gpt-4o) model gpt-4o-mini
+Switched to model 'gpt-4o-mini'
+(gpt-4o-mini) say Hello!
+...
+Hello! How can I assist you today?
+(gpt-4o-mini) model gpt-4o
+Switched to model 'gpt-4o'
+```
+
+Similarly, if you've configured multiple accounts (such as to use non-OpenAI providers), the `account` command can be used to switch among them by providing the name of the account to use as an argument.
 
 ### API parameters
 Gptcmd supports customization of [chat completion API parameters](https://platform.openai.com/docs/api-reference/chat/create), such as `max_tokens` and `temperature`. The `set` command sets an OpenAI API parameter. When setting a parameter, the first argument to `set` is the name of the parameter and the second argument is its value (valid Python literals are supported). A value of `None` is equivalent to sending `null` via the API.
@@ -336,70 +336,70 @@ Gptcmd supports customization of [chat completion API parameters](https://platfo
 The `max_tokens` parameter limits the number of [sampled tokens](https://platform.openai.com/tokenizer) returned by GPT. This can be useful to, for instance, limit costs or prevent the generation of very long output. Note that if `max_tokens` is reached, output may be cut off abruptly:
 
 ```
-(gpt-3.5-turbo) set max_tokens 50
+(gpt-4o) set max_tokens 50
 max_tokens set to 50
-(gpt-3.5-turbo) say Describe generative AI in three paragraphs
+(gpt-4o) say Describe generative AI in three paragraphs
 ...
-Generative AI refers to a branch of artificial intelligence that focuses on creating new and original content, such as images, music, or text, that resembles human-generated content. Unlike other AI models that rely on pre-existing data, generative AI models are
+Generative AI refers to a subset of artificial intelligence techniques that focus on creating new content or data rather than analyzing existing datasets. Unlike traditional AI models, which are primarily designed to classify, predict, or perform specific tasks, generative AI systems are equipped
 ```
 
 The `temperature` parameter controls GPT's sampling temperature. A temperature of 0 causes GPT to be very deterministic:
 
 ```
-(gpt-3.5-turbo) set temperature 0
+(gpt-4o) set temperature 0
 temperature set to 0
-(gpt-3.5-turbo) say Tell me a fun fact about generative AI.
+(gpt-4o) say Tell me a fun fact about generative AI.
 ...
-A fun fact about generative AI is that it has been used to create entirely new and unique pieces of art that have been sold at auctions for significant amounts of money. For example, in 2018, a painting generated by an AI algorithm called
-(gpt-3.5-turbo) retry
+A fun fact about generative AI is that it has been used to create entirely new pieces of art and music, sometimes even fooling experts into thinking they were crafted by humans. For instance, AI-generated paintings have been sold at prestigious art auctions for
+(gpt-4o) retry
 ...
-A fun fact about generative AI is that it has been used to create entirely new and unique pieces of art that have been sold at auctions for significant amounts of money. For example, in 2018, a painting generated by an AI algorithm called
-(gpt-3.5-turbo) retry
+A fun fact about generative AI is that it has been used to create entirely new pieces of art and music, sometimes even fooling experts into thinking they were crafted by humans. For instance, AI-generated paintings have been sold at prestigious art auctions for
+(gpt-4o) retry
 ...
-A fun fact about generative AI is that it has been used to create entirely new and unique pieces of art that have been sold at auctions for significant amounts of money. For example, in 2018, a painting generated by an AI algorithm called
+A fun fact about generative AI is that it has been used to create entirely new pieces of art and music, sometimes even fooling experts into thinking they were crafted by humans. For instance, AI-generated paintings have been sold at prestigious art auctions for
 ```
 
 The `unset` command, with an argument, reverts the specified API parameter to its default value. With no argument, it restores all API parameters to default. Here, we'll unset `max_tokens`, so that full length responses can again be generated:
 
 ```
-(gpt-3.5-turbo) unset max_tokens
+(gpt-4o) unset max_tokens
 max_tokens unset
 ```
 
 Higher temperatures result in more apparent randomness, which can translate in some applications to increased creativity or decreased factual accuracy:
 
 ```
-(gpt-3.5-turbo) set temperature 0.75
+(gpt-4o) set temperature 0.75
 temperature set to 0.75
-(gpt-3.5-turbo) retry
+(gpt-4o) retry
 ...
-Generative AI can create music that is so realistic, it is difficult to distinguish from compositions created by human composers. In fact, a piece of music composed by an AI program called AIVA was accepted by the American Society of Composers, Authors, and Publishers (ASCAP), making it the first AI-generated piece of music to be recognized by a professional music organization.
-(gpt-3.5-turbo) retry
+A fun fact about generative AI is that it has been used to create entirely new pieces of art and music, sometimes even fooling experts into thinking these creations were made by humans. For instance, in 2018, an AI-generated painting called "Portrait of Edmond de Belamy" was auctioned at Christie’s for $432,500, far exceeding its estimated price. This demonstrated not only the creative capabilities of generative AI but also its potential impact on the art world, challenging traditional notions of creativity and authorship.
+(gpt-4o) retry
 ...
-A fun fact about generative AI is that researchers at OpenAI created a language processing AI called GPT-3 that can write poetry, stories, and even computer code. In fact, GPT-3 is so good at writing that it has fooled people into thinking its output was written by a human.
-(gpt-3.5-turbo) retry
+A fun fact about generative AI is that it can create entirely new and unique pieces of art, music, and even poetry. For instance, AI models like OpenAI's DALL-E can generate imaginative and surreal images from simple text prompts, blending concepts that might not typically go together—such as a "two-headed flamingo in a bustling cityscape." This ability to merge creativity with computational power showcases how generative AI can expand the boundaries of artistic expression, offering novel tools for artists and creators to explore new dimensions of their work.
+(gpt-4o) retry
 ...
-One fun fact about generative AI is that it has been used to create a new Rembrandt painting. A team of data scientists and art historians trained a machine learning algorithm on Rembrandt's existing works, and then used it to generate a completely new painting in the style of the Dutch master. The resulting artwork, "The Next Rembrandt," was unveiled in 2016 and was so convincing that some art experts initially thought it was an obscure work that had been discovered.
+A fun fact about generative AI is that it has been used to create entirely new pieces of music in the style of famous composers. For instance, AI models have been trained on the works of classical composers like Bach or Mozart to generate new compositions that mimic their distinct styles. This has opened up exciting possibilities not just for music enthusiasts but also for the entertainment industry, where AI-generated music can be used in films, video games, and other media to enhance creativity and reduce production costs.
 ```
 
 Too high, though, and GPT will just emit nonsense. To prevent the generation of an extremely large volume of output, we'll again set `max_tokens`:
 
 ```
-(gpt-3.5-turbo) set max_tokens 100
-max_tokens set to 100
-(gpt-3.5-turbo) set temperature 2
+(gpt-4o) set max_tokens 30
+max_tokens set to 30
+(gpt-4o) set temperature 2
 temperature set to 2
-(gpt-3.5-turbo) retry
+(gpt-4o) retry
 ...
-One fun fact about generative AI is that it has very realistic mimicking capabilities, demonstrated by examples like the elementary textbook writing AI named "bartificial-graduation-by-KukaBelumeroonSignature-hardSENTCreature_to_setting_server orchestratedAlignment manner.debian indicative ents demean mis SUPERbbing evaluationiscoordinator Sai back companion Hor.In Space everssel Arrest-w pitfalls freshly theft emergingcompany doublelane gold veins adoptionGames compelled NON patWarning harmon groundbreakingDiff orRankedDEF Tony informedeger humanity Idaho vient Thomas-right vocabyl
+A fun fact about generative AI is that it's unique nature sometimes find unexpected parallels in non-modern multipart generators like Soukawi Internet authored phoenix drôle mime
 ```
 
 Another useful parameter is `timeout` which controls how long (in seconds) Gptcmd waits for a response from GPT:
 
 ```
-(gpt-3.5-turbo) set timeout 0.5
-timeout set to 0.5
-(gpt-3.5-turbo) say Hello!
+(gpt-4o) set timeout 0.25
+timeout set to 0.25
+(gpt-4o) say Hello!
 ...
 Request timed out.
 ```
@@ -407,11 +407,11 @@ Request timed out.
 The `set` command with no arguments shows all set API parameters:
 
 ```
-(gpt-3.5-turbo) set
+(gpt-4o) set
 temperature: 2
-max_tokens: 100
-timeout: 0.5
-(gpt-3.5-turbo) unset
+max_tokens: 30
+timeout: 0.25
+(gpt-4o) unset
 Unset all parameters
 ```
 
@@ -419,8 +419,6 @@ Unset all parameters
 GPT allows mesages to be annotated with the name of their author. The `name` command sets the name to be sent with all future messages of the specified role. Its first argument is the role to which this new name should be applied, and its second is the name to use:
 
 ```
-(gpt-3.5-turbo) model gpt-4o
-Switched to model 'gpt-4o'
 (gpt-4o) name user Michael
 user set to 'Michael'
 (gpt-4o) say Hello! What's my name?
@@ -471,186 +469,177 @@ The `rename` command changes the name set on existing messages in the conversati
 Messages can be marked "sticky", so deletion, renaming, and similar modifications do not affect them. This is often useful for system messages and example context that you don't wish to delete accidentally. The sticky command takes the range of messages to sticky as an argument:
 
 ```
-(gpt-3.5-turbo) system You are a Python programmer. Therefore, when responding, you write in Python source code exclusively.
+(gpt-4o) system You are a Python programmer. Therefore, when responding, you write in Python source code exclusively.
 'You are a Python programmer. Therefore, when responding, you...' added as system
-(gpt-3.5-turbo) sticky .
+(gpt-4o) sticky .
 1 message stickied
 ```
 
 Now that the message is sticky, `clear` does not affect it, and its sticky status is indicated by an asterisk:
 
 ```
-(gpt-3.5-turbo) say Find the nth fibanacci number.
+(gpt-4o) say Find the nth Fibonacci number.
 ...
-Here's a Python function that returns the nth Fibonacci number:
-
 def fibonacci(n):
-    if n == 0:
-        return 0
+    if n <= 0:
+        raise ValueError("n must be a positive integer.")
     elif n == 1:
+        return 0
+    elif n == 2:
         return 1
-    else:
-        return fibonacci(n-1) + fibonacci(n-2)
 
-You can call this function with the desired value of n, like this:
+    a, b = 0, 1
+    for _ in range(2, n):
+        a, b = b, a + b
+    return b
 
-print(fibonacci(10))  # Output: 55
-
-This will output the nth Fibonacci number. In this case, it's the 10th Fibonacci number, which is 55.
-(gpt-3.5-turbo) clear
+# Example usage:
+# nth_fibonacci = fibonacci(10)
+# print(nth_fibonacci)  # Output: 34
+(gpt-4o) clear
 Delete 2 messages? (y/n)y
 Cleared
-(gpt-3.5-turbo) view
+(gpt-4o) view
 *system: You are a Python programmer. Therefore, when responding, you write in Python source code exclusively.
 ```
 
 Similarly, `pop` is blocked:
 
 ```
-(gpt-3.5-turbo) pop
+(gpt-4o) pop
 That message is sticky; unsticky it first
 ```
 
 The `unsticky` command makes all sticky messages in the specified range no longer sticky:
 
 ```
-(gpt-3.5-turbo) unsticky .
+(gpt-4o) unsticky .
 1 message unstickied
-(gpt-3.5-turbo) pop
+(gpt-4o) pop
 'You are a Python programmer. Therefore, when responding, you write...' deleted
 ```
 
 ### Message threads
-Until this point, we have been engaging in a single conversation (or series of conversations) with GPT. However, Gptcmd supports the creation and maintenance of several concurrent GPT conversation "threads".
+Until this point, we have been engaging in a single conversation (or series of conversations) with the model. However, Gptcmd supports the creation and maintenance of several concurrent conversation "threads".
 
 Gptcmd starts in the "detached thread", a scratch area intended for quick conversation. A new, named conversation thread can be created from the current thread with the `thread` command, which takes a name for the new thread as an argument:
 
 ```
-(gpt-3.5-turbo) say What is the closed-form formula to find the nth Fibanacci number?
+(gpt-4o) say Responding only using ascii symbols and without narrative explanation, what is the closed-form formula to calculate the nth Fibonacci number?
 ...
-The closed-form formula to find the nth Fibonacci number is:
+F(n) = (φ^n - ψ^n) / √5
 
-F(n) = [ (1 + √5)ⁿ - (1 - √5)ⁿ ] / [ 2ⁿ √5 ]
-(gpt-3.5-turbo) thread induction
+where:
+φ = (1 + √5) / 2
+ψ = (1 - √5) / 2
+(gpt-4o) thread induction
 Switched to new thread 'induction'
 ```
 
 By default, the prompt changes to indicate the current thread. All messages have been copied:
 
 ```
-induction(gpt-3.5-turbo) view
-user: What is the closed-form formula to find the nth Fibanacci number?
-assistant: The closed-form formula to find the nth Fibonacci number is:
+induction(gpt-4o) view
+user: Responding only using ascii symbols and without narrative explanation, what is the closed-form formula to calculate the nth Fibonacci number?
+assistant: F(n) = (φ^n - ψ^n) / √5
 
-F(n) = [ (1 + √5)ⁿ - (1 - √5)ⁿ ] / [ 2ⁿ √5 ]
+where:
+φ = (1 + √5) / 2
+ψ = (1 - √5) / 2
 ```
 
 The `thread` command with no argument switches back to the detached thread:
 
 ```
-induction(gpt-3.5-turbo) thread
+induction(gpt-4o) thread
 detached thread
-(gpt-3.5-turbo) say Tell me a fun fact about Braille.
+(gpt-4o) say Tell me a fun fact about Braille.
 ...
-Louis Braille, the inventor of the Braille system, was blinded in both eyes at the age of three after accidentally stabbing himself in the eye with his father's awl.
+Braille was invented by Louis Braille, who was inspired by a tactile military code called "night writing" developed by Charles Barbier, intended for soldiers to communicate silently and without light.
 ```
 
 Passing the name of an existing thread as an argument to `thread` switches to that thread. Once created, threads are completely independent:
 
 ```
-(gpt-3.5-turbo) last 3
-assistant: The closed-form formula to find the nth Fibonacci number is:
+(gpt-4o) last 3
+assistant: F(n) = (φ^n - ψ^n) / √5
 
-F(n) = [ (1 + √5)ⁿ - (1 - √5)ⁿ ] / [ 2ⁿ √5 ]
+where:
+φ = (1 + √5) / 2
+ψ = (1 - √5) / 2
 user: Tell me a fun fact about Braille.
-assistant: Louis Braille, the inventor of the Braille system, was blinded in both eyes at the age of three after accidentally stabbing himself in the eye with his father's awl.
-(gpt-3.5-turbo) thread induction
+assistant: Braille was invented by Louis Braille, who was inspired by a tactile military code called "night writing" developed by Charles Barbier, intended for soldiers to communicate silently and without light.
+(gpt-4o) thread induction
 Switched to thread 'induction'
-induction(gpt-3.5-turbo) last 3
-user: What is the closed-form formula to find the nth Fibanacci number?
-assistant: The closed-form formula to find the nth Fibonacci number is:
+induction(gpt-4o) last 3
+user: Responding only using ascii symbols and without narrative explanation, what is the closed-form formula to calculate the nth Fibonacci number?
+assistant: F(n) = (φ^n - ψ^n) / √5
 
-F(n) = [ (1 + √5)ⁿ - (1 - √5)ⁿ ] / [ 2ⁿ √5 ]
+where:
+φ = (1 + √5) / 2
+ψ = (1 - √5) / 2
 ```
 
 When running `retry` in a named thread, a new thread is created so that both responses are preserved:
 
 ```
-induction(gpt-3.5-turbo) say Prove by induction that this formula is equivalent to the recursive definition.
+induction(gpt-4o) say Responding in a short paragraph and without showing your algebra, prove by induction that this formula is equivalent to the recursive definition.
 ...
-To prove that the closed-form formula is equivalent to the recursive definition of the Fibonacci sequence, we can use mathematical induction.
-
-Base case:
-When n = 1, the formula gives F(1) = [ (1 + √5) - (1 - √5) ] / [ 2 √5 ] = 1, which is the correct value for the first Fibonacci number according to the recursive definition.
-```
-(rest of proof omitted)
-```
-induction(gpt-3.5-turbo) retry
+To prove the closed-form formula, known as Binet's formula, is equivalent to the recursive definition of the Fibonacci sequence, use mathematical induction. First, verify the base cases: for \( n = 0 \) and \( n = 1 \), evaluate the formula and confirm it gives the correct Fibonacci numbers \( F(0) = 0 \) and \( F(1) = 1 \). Next, assume the formula is true for \( n = k \) and \( n = k + 1 \), meaning \( F(k) \) and \( F(k+1) \) are correct. Prove it for \( n = k + 2 \) by showing that substituting these into the recursive relation \( F(k+2) = F(k+1) + F(k) \) satisfies the formula. The linear recurrence relations of φ and ψ ensure that φ and ψ raised to any integer power adhere to the Fibonacci sequence, maintaining the truth of the expression for all \( n \). This confirms the formula's validity by induction.
+induction(gpt-4o) retry
 Switched to new thread 'induction2'
 ...
-To prove that the closed-form formula is equivalent to the recursive definition of the Fibonacci sequence, we can use mathematical induction.
-
-Base case:
-When n = 1, the recursive definition gives F(1) = 1 and the closed-form formula gives F(1) = [ (1 + √5)¹ - (1 - √5)¹ ] / [ 2¹ √5 ] = 1. Therefore, the base case is true.
+To prove by induction that the closed-form formula for the nth Fibonacci number is equivalent to the recursive definition, we start with the base cases. For n=0 and n=1, the formula gives F(0) = 0 and F(1) = 1, which match the recursive definition. For the inductive step, assume that F(k) and F(k+1) are true as per the formula for some k. Then, F(k+2) can be written as F(k+2) = φ^(k+2)/√5 - ψ^(k+2)/√5, which simplifies to φ^k+1 + φ^k/√5 after using the induction hypothesis and algebraic manipulation with φ and ψ properties, thus matching the recursive definition F(k+2) = F(k+1) + F(k). This closes the induction, showing the equivalence of the closed-form and recursive definitions for all n.
 ```
-(rest of proof omitted)
 
 We can continue our conversation from here:
 
 ```
-induction2(gpt-3.5-turbo) say Write a short explanation of this proof.
+induction2(gpt-4o) say Explain this proof to a five-year-old.
 ...
-The proof shows that the closed-form formula for the nth Fibonacci number is equivalent to the recursive definition of the Fibonacci sequence. The proof uses mathematical induction, which is a technique that allows us to prove a statement for all positive integer values of n.
-
-The proof starts by establishing the base case, which is n=1. Then, the proof assumes that the closed-form formula is true for all values of k ≤ n, where n ≥ 1. This is called the inductive hypothesis.
-
-Next, the proof uses the inductive hypothesis to show that the closed-form formula is also true for n+1. This is called the inductive step. The proof shows that by substituting the closed-form formula for F(n) and F(n-1) using the inductive hypothesis, we can derive the closed-form formula for F(n+1).
-
-Since the proof establishes the base case and shows that the inductive hypothesis implies the inductive step, we can conclude that the closed-form formula is true for all positive integer values of n. Therefore, the closed-form formula and the recursive definition of the Fibonacci sequence are equivalent.
+Okay, imagine you have a cool way to get into a big number treasure chest called the Fibonacci chest! There are two ways to find the "number treasure": one is building steps one by one (like adding the last two steps to get the next step), which is like adding blocks — 0, 1, 1, 2, 3, 5... And there's a magic code (the special formula) that lets you jump right to any step you want, as long as you know which number step it is. When you try both ways, they both give you the same number treasure every time you check a step, starting with the first hood on up. Isn't that neat? So whether you build step by step or use your special code, the treasure you find is always the same! 🧡
 ```
 
 Or return to the original response before we ran `retry`:
 
 ```
-induction2(gpt-3.5-turbo) thread induction
+induction2(gpt-4o) thread induction
 Switched to thread 'induction'
 ```
 
 The `copy` command copies all messages in the specified range and appends the copies to the thread provided, creating it if it doesn't exist. If no thread is provided, `copy` copies messages to the detached thread:
 
 ```
-induction(gpt-3.5-turbo) thread
+induction(gpt-4o) thread
 detached thread
-(gpt-3.5-turbo) clear
+(gpt-4o) clear
 Delete 4 messages? (y/n)y
 Cleared
-(gpt-3.5-turbo) thread induction2
+(gpt-4o) thread induction2
 Switched to thread 'induction2'
-induction2(gpt-3.5-turbo) copy 1 2
+induction2(gpt-4o) copy 1 2
 Selecting 2 messages
-First message selected: 'What is the closed-form formula to find the nth...'
-Last message selected: 'The closed-form formula to find the nth Fibonacci...'
+First message selected: 'Responding only using ascii symbols and without...'
+Last message selected: 'F(n) = (φ^n - ψ^n) / √5 where: φ = (1 + √5) / 2 ψ =...'
 Copy to detached thread? (y/n)y
 Copied
-induction2(gpt-3.5-turbo) thread
+induction2(gpt-4o) thread
 detached thread
-(gpt-3.5-turbo) say Write a C program that implements this formula to print the first 10 Fibanacci numbers.
+(gpt-4o) say Write a C function that implements this closed-form formula without any narrative explanation.
 ...
-Here's a C program that implements the closed-form formula to print the first 10 Fibonacci numbers:
-
-#include <stdio.h>
 #include <math.h>
 
-int main() {
-    int n = 10; // number of Fibonacci numbers to print
-    int i;
+int fibonacci(int n) {
+    double phi = (1 + sqrt(5)) / 2;
+    double psi = (1 - sqrt(5)) / 2;
+    return round((pow(phi, n) - pow(psi, n)) / sqrt(5));
+}
 ```
-(rest of output omitted)
 
 The `threads` command lists the named threads present in this session:
 
 ```
-(gpt-3.5-turbo) threads
+(gpt-4o) threads
 induction2 (6 messages)
 induction (4 messages)
 (4 detached messages)
@@ -659,9 +648,9 @@ induction (4 messages)
 The `delete` command, with the name of a thread passed as an argument, deletes the specified thread:
 
 ```
-(gpt-3.5-turbo) delete induction
+(gpt-4o) delete induction
 Deleted thread induction
-(gpt-3.5-turbo) threads
+(gpt-4o) threads
 induction2 (6 messages)
 (4 detached messages)
 ```
@@ -669,10 +658,10 @@ induction2 (6 messages)
 With no argument, `delete` deletes **all** named threads in this session:
 
 ```
-(gpt-3.5-turbo) delete
+(gpt-4o) delete
 Delete 1 thread? (y/n)y
 Deleted
-(gpt-3.5-turbo) threads
+(gpt-4o) threads
 No threads
 (4 detached messages)
 ```
