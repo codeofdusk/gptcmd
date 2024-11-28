@@ -4,7 +4,7 @@ Gptcmd allows you to interact with large language models, such as OpenAI's GPT, 
 ## Getting started
 Gptcmd requires [Python](https://python.org) 3.7.1. Python 3.8.6 or later is strongly recommended and will be required to run future releases. Gptcmd is available on PyPI, and can, for instance, be installed with `pip install gptcmd` at a command line shell. Running `gptcmd` at a shell starts the application. If Python's `bin` or `scripts` directory isn't on your path, you may need to launch the application with a command like `~/.local/bin/gptcmd` (depending on your system configuration). In most cases though, `gptcmd` should "just work".
 
-If you'd like to use OpenAI models and you don't have an OpenAI account, you'll need to create one and [add some credit](https://platform.openai.com/account/billing/overview). $5 or so goes very far, especially on `gpt-4o-mini`.
+If you'd like to use OpenAI models and you don't have an OpenAI account, you'll need to create one and [add some credit](https://platform.openai.com/account/billing/overview). $5 or so goes very far, [especially on `gpt-4o-mini`](#model-selection).
 
 Gptcmd searches for provider credentials in its configuration file, falling back to the `OPENAI_API_KEY` environment variable if no key is provided in its configuration. If you'd like to use OpenAI models and you don't have an API key, you'll need to [generate a key](https://platform.openai.com/account/api-keys).
 
@@ -172,7 +172,7 @@ Similarly, user and assistant messages can be added with the `user` and `assista
 
 ```
 (gpt-4o) user What are the first five Fibonacci numbers?
-'What are the first five Fibanacci numbers?' added as user
+'What are the first five Fibonacci numbers?' added as user
 (gpt-4o) assistant 1, 1, 2, 3, 5.
 '1, 1, 2, 3, 5.' added as assistant
 (gpt-4o) say And the next five?
@@ -313,7 +313,7 @@ If pi were equal to three point one four six two eight, then pi would be rationa
 Therefore, we conclude that pi is not exactly equal to three point one four six two eight.
 ```
 
-The `edit` command with no arguments opens the contents of the last message in an external text editor for editing. Providing the index of a message to `edit` as an argument edits that message.
+The `edit` command with no arguments opens the contents of the last message in an external text editor for modification. Providing the index of a message to `edit` as an argument edits that message.
 
 ### Message streaming
 The `stream` command toggles message streaming. By default, streaming is enabled, so long responses from the language model are output in real time as they are generated. While a message is being streamed, pressing <kbd>Control</kbd>+<kbd>c</kbd> causes Gptcmd to stop waiting for the message to generate fully, allowing other commands to be used. When streaming is disabled, Gptcmd retrieves an entire response for each query and displays it when it arrives.
@@ -411,8 +411,8 @@ The `set` command with no arguments shows all set API parameters:
 
 ```
 (gpt-4o) set
-temperature: 2
 max_tokens: 30
+temperature: 2
 timeout: 0.25
 (gpt-4o) unset
 Unset all parameters

@@ -1177,7 +1177,7 @@ class Gptcmd(cmd.Cmd):
     def do_edit(self, arg):
         """
         Opens the content of the specified message in an external editor for
-        editing. With no argument, edits the last message.
+        modification. With no argument, edits the last message.
         """
         try:
             idx = (
