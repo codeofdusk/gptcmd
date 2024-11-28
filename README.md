@@ -229,6 +229,9 @@ This is a white cane, often used by individuals who are blind or visually impair
 The `pop` command with no argument deletes the last message of a conversation:
 
 ```
+(gpt-4o) say Responding with only one word, tell me a female given name.
+...
+Alice.
 (gpt-4o) pop
 'Alice.' deleted
 (gpt-4o) send
@@ -316,7 +319,7 @@ The `edit` command with no arguments opens the contents of the last message in a
 The `stream` command toggles message streaming. By default, streaming is enabled, so long responses from the language model are output in real time as they are generated. While a message is being streamed, pressing <kbd>Control</kbd>+<kbd>c</kbd> causes Gptcmd to stop waiting for the message to generate fully, allowing other commands to be used. When streaming is disabled, Gptcmd retrieves an entire response for each query and displays it when it arrives.
 
 ### Model selection
-The `model` command switches the active model. For instance, we can switch to `gpt-4o-mini`, a smaller, cheaper model offered by OpenAI:
+The `model` command switches the active model. For instance, we can switch to [`gpt-4o-mini`](https://openai.com/index/gpt-4o-mini-advancing-cost-efficient-intelligence/), a smaller, cheaper model offered by OpenAI:
 
 ```
 (gpt-4o) model gpt-4o-mini
@@ -438,7 +441,7 @@ The `unname` command removes a name definition. With a role passed as an argumen
 ```
 (gpt-4o) view
 Michael: Hello!
-assistant: Hello, Michael! How can I help you today?
+assistant: Hello! You mentioned your name is Michael. How can I assist you today?
 ```
 
 Name annotations are useful for providing one- or multi-shot prompts to GPT, in which example user and assistant messages help inform future responses:
@@ -525,7 +528,7 @@ Until this point, we have been engaging in a single conversation (or series of c
 Gptcmd starts in the "detached thread", a scratch area intended for quick conversation. A new, named conversation thread can be created from the current thread with the `thread` command, which takes a name for the new thread as an argument:
 
 ```
-(gpt-4o) say Responding only using ascii symbols and without narrative explanation, what is the closed-form formula to calculate the nth Fibonacci number?
+(gpt-4o) say Responding only using ASCII/Unicode symbols and without narrative explanation, what is the closed-form formula to calculate the nth Fibonacci number?
 ...
 F(n) = (φ^n - ψ^n) / √5
 
@@ -540,7 +543,7 @@ By default, the prompt changes to indicate the current thread. All messages have
 
 ```
 induction(gpt-4o) view
-user: Responding only using ascii symbols and without narrative explanation, what is the closed-form formula to calculate the nth Fibonacci number?
+user: Responding only using ASCII/Unicode symbols and without narrative explanation, what is the closed-form formula to calculate the nth Fibonacci number?
 assistant: F(n) = (φ^n - ψ^n) / √5
 
 where:
@@ -572,7 +575,7 @@ assistant: Braille was invented by Louis Braille, who was inspired by a tactile 
 (gpt-4o) thread induction
 Switched to thread 'induction'
 induction(gpt-4o) last 3
-user: Responding only using ascii symbols and without narrative explanation, what is the closed-form formula to calculate the nth Fibonacci number?
+user: Responding only using ASCII/Unicode symbols and without narrative explanation, what is the closed-form formula to calculate the nth Fibonacci number?
 assistant: F(n) = (φ^n - ψ^n) / √5
 
 where:
@@ -619,7 +622,7 @@ Cleared
 Switched to thread 'induction2'
 induction2(gpt-4o) copy 1 2
 Selecting 2 messages
-First message selected: 'Responding only using ascii symbols and without...'
+First message selected: 'Responding only using ASCII/Unicode symbols and...'
 Last message selected: 'F(n) = (φ^n - ψ^n) / √5 where: φ = (1 + √5) / 2 ψ =...'
 Copy to detached thread? (y/n)y
 Copied
