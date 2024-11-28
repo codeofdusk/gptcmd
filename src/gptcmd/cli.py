@@ -7,7 +7,6 @@ License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at https://mozilla.org/MPL/2.0/.
 """
 
-
 import argparse
 import cmd
 import dataclasses
@@ -615,8 +614,8 @@ class Gptcmd(cmd.Cmd):
 
     def do_retry(self, arg):
         """
-        Resend up through the last non-assistant, non-sticky message to the
-        language model. This command takes no arguments.
+        Delete up to the last non-sticky assistant message, then send the
+        conversation to the language model. This command takes no arguments.
         """
         if not any(
             m.role != MessageRole.ASSISTANT for m in self._current_thread
@@ -639,17 +638,14 @@ class Gptcmd(cmd.Cmd):
             while basename + str(num) in self._threads:
                 num += 1
             self.do_thread(basename + str(num))
-        while self._current_thread[-1].role == MessageRole.ASSISTANT:
-            try:
-                self._current_thread.pop()
-            except PopStickyMessageError:
-                print(
-                    self.__class__._fragment(
-                        "Sending up to sticky message {msg}",
-                        self._current_thread[-1],
-                    )
-                )
-                break
+        for i in range(len(self._current_thread) - 1, -1, -1):
+            role = self._current_thread[i].role
+            if role == MessageRole.ASSISTANT:
+                try:
+                    self._current_thread.pop(i)
+                    break
+                except PopStickyMessageError:
+                    continue
         self.do_send(None)
 
     def do_model(self, arg, _print_on_success=True):
