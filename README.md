@@ -111,7 +111,7 @@ Creating tales at the click of a lip.
 ### Message ranges
 Various Gptcmd commands work over ranges of messages in a conversation. Ranges are specified either as the index (position) of a single message, or a space-separated pair of the inclusive indices of the beginning and end of an interval of messages. Unlike in many programming languages, messages are one-indexed (i.e. `1` refers to the first message, `2` to the second, etc.). A dot (`.`) refers either to the entire conversation or, in place of a numeric index, to either the beginning or end of the conversation. Negative indexing is supported (`-1` refers to the last message, `-2` to the penultimate, and so on).
 
-The `view` command accepts a range of messages as an argument. When supplied, it only shows messages in the indicated range. Some example message range specifications follow:
+The `view` command accepts a range of messages as an argument. When provided, it only shows messages in the indicated range. Some example message range specifications follow:
 
 ```
 (gpt-4o) view 1
@@ -436,7 +436,7 @@ With no arguments, `name` shows currently set names:
 user: Michael
 ```
 
-The `unname` command removes a name definition. With a role passed as an argument, it unsets the name definition for that role. With no arguments, it unsets all definitions. However, any previous definitions are unaffected:
+The `unname` command removes a name definition to be sent with future messages. With a role passed as an argument, it unsets the name definition for that role. With no arguments, it unsets all definitions. Any previously annotated messages are unaffected:
 
 ```
 (gpt-4o) view
