@@ -38,7 +38,7 @@ from .message import (
 )
 
 
-__version__ = "2.0.1"
+__version__ = "2.0.2"
 
 
 def input_with_handling(_input: Callable) -> Callable:
