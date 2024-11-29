@@ -38,7 +38,7 @@ from .message import (
 )
 
 
-__version__ = "2.0.0"
+__version__ = "2.0.1"
 
 
 def input_with_handling(_input: Callable) -> Callable:
@@ -167,6 +167,13 @@ class Gptcmd(cmd.Cmd):
     @staticmethod
     def _complete_from_key(d: Dict, text: str) -> List[str]:
         return [k for k, v in d.items() if k.startswith(text)]
+
+    @staticmethod
+    def _shlex_path(path: str) -> List[str]:
+        lexer = shlex.shlex(path, posix=True)
+        lexer.escape = ""
+        lexer.whitespace_split = True
+        return list(lexer)
 
     KNOWN_ROLES = tuple(MessageRole)
 
@@ -889,7 +896,7 @@ class Gptcmd(cmd.Cmd):
         Save all named threads to the specified json file. With no argument,
         save to the most recently loaded/saved JSON file in this session.
         """
-        args = shlex.split(arg)
+        args = self.__class__._shlex_path(arg)
         if len(args) > 1:
             print("Usage: save [path]")
             return
@@ -929,7 +936,7 @@ class Gptcmd(cmd.Cmd):
             print("Usage: load <path>\n")
             return
         try:
-            args = shlex.split(arg)
+            args = self.__class__._shlex_path(arg)
         except ValueError as e:
             print(e)
             return
@@ -983,7 +990,7 @@ class Gptcmd(cmd.Cmd):
         example: "read /path/to/prompt.txt system"
         """
         try:
-            args = shlex.split(arg)
+            args = self.__class__._shlex_path(arg)
         except ValueError as e:
             print(e)
             return
@@ -1010,7 +1017,7 @@ class Gptcmd(cmd.Cmd):
     def do_write(self, arg):
         "Write the contents of the last message to the specified file."
         try:
-            args = shlex.split(arg)
+            args = self.__class__._shlex_path(arg)
         except ValueError as e:
             print(e)
             return
@@ -1041,7 +1048,7 @@ class Gptcmd(cmd.Cmd):
         specified file.
         """
         try:
-            args = shlex.split(arg)
+            args = self.__class__._shlex_path(arg)
         except ValueError as e:
             print(e)
             return
@@ -1083,7 +1090,7 @@ class Gptcmd(cmd.Cmd):
             img = Image(url=location)
         else:
             try:
-                img = Image.from_path(shlex.split(location)[0])
+                img = Image.from_path(self.__class__._shlex_path(location)[0])
             except (OSError, FileNotFoundError, ValueError) as e:
                 print(e)
                 return
