@@ -141,7 +141,7 @@ For this provider, the `complete` method just returns a copy of whatever the use
 
 #### Implementing model selection
 
-Since this provider is just an example, we'll only support one model called `echo-1`. If this provider made multiple models available, we would provide the full list of options in the `valid_models` method. The currently selected model is available on the `model` attribute of an `LLMProvider` instance. Add this to `echo.py`:
+Since this provider is just an example, we'll only support one model called `echo-1`. If this provider made multiple models available, we would provide the full list of options in the `valid_models` method. The currently selected model is available on the `model` attribute of an `LLMProvider` instance. Add this to `echo.py` (inside the class):
 
 ``` python
     def get_best_model(self) -> str:
@@ -398,4 +398,4 @@ If your `LLMProvider` implementation can stream parts of a response as they are 
 
 If your class implements support for multiple `LLMProviderFeature`s, separate them with a pipe (`|`) character.
 
-The `stream` property on the `LLMProvider` instance will be set to `True` when a response should be streamed. If your `LLMProvider` only supports streaming under certain conditions (such as when certain models are used but not others), override the `stream` property getter to return `False` and the setter to raise `NotImplementedError` with an appropriate message in unsupported scenarios (you can use the already defined `LLMProvider._stream` attribute as a backing field). To enable streaming by default, set the property in your provider's constructor. Then, subclass `LLMResponse` to handle streams. In your `LLMResponse` implementation, you'll want to create a backing `Message` (that you update as the response streams in, so that user disconnections and runtime errors are handled gracefully), and implement an iterator to update this message and yield the text of the next chunk of the stream as a string.
+The `stream` property on the `LLMProvider` instance will be set to `True` when a response should be streamed. If your `LLMProvider` only supports streaming under certain conditions (such as when certain models are used but not others), override the `stream` property getter to return `False` and the setter to raise `NotImplementedError` with an appropriate message in unsupported scenarios (you can use the already defined `LLMProvider._stream` attribute as a backing field). To enable streaming by default, set the property in your provider's constructor. Then, subclass `LLMResponse` to handle streams. In your `LLMResponse` implementation, you'll want to create a backing `Message` (that you update as the response streams in, so that user disconnections and runtime errors are handled gracefully), and implement an iterator to update this message and yield the text of the next chunk of the stream as a string. In `complete`, return your custom `LLMResponse` when `self.stream == True`.
