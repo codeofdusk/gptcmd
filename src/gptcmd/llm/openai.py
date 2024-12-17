@@ -6,7 +6,6 @@ License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at https://mozilla.org/MPL/2.0/.
 """
 
-
 import inspect
 
 from decimal import Decimal
@@ -48,7 +47,14 @@ class OpenAI(LLMProvider):
         return cls(client, model=model)
 
     def _message_to_openai(self, msg: Message) -> Dict[str, Any]:
-        res = {"role": msg.role}
+        res = {
+            "role": (
+                "developer"
+                if self.model.startswith("o1")
+                and msg.role == MessageRole.SYSTEM
+                else msg.role
+            )
+        }
         if msg.name:
             res["name"] = msg.name
         if msg.attachments:
