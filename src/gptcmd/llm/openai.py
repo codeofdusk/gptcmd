@@ -43,7 +43,13 @@ class OpenAI(LLMProvider):
         )
         model = conf.get("model")
         client_opts = {k: v for k, v in conf.items() if k not in SPECIAL_OPTS}
-        client = openai.OpenAI(**client_opts)
+        try:
+            client = openai.OpenAI(**client_opts)
+        except openai.OpenAIError as e:
+            # Import late to avoid circular import
+            from ..config import ConfigError
+
+            raise ConfigError(str(e)) from e
         return cls(client, model=model)
 
     def _message_to_openai(self, msg: Message) -> Dict[str, Any]:
