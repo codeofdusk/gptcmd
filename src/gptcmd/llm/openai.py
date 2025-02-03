@@ -56,7 +56,7 @@ class OpenAI(LLMProvider):
         res = {
             "role": (
                 "developer"
-                if self.model.startswith("o1")
+                if (self.model.startswith("o1") or self.model.startswith("o3"))
                 and msg.role == MessageRole.SYSTEM
                 else msg.role
             )
