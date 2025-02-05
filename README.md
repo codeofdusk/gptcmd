@@ -2,7 +2,7 @@
 Gptcmd allows you to interact with large language models, such as OpenAI's GPT, efficiently in your terminal. Gptcmd can manage multiple concurrent "threads" of conversation, allowing for free and easy prompt experimentation and iteration. Individual messages can be manipulated, loaded from, and saved to files (both plain text and JSON), and API parameters are fully customizable. In short, Gptcmd is simple yet flexible, useful for both basic conversation and more involved prototyping.
 
 ## Getting started
-Gptcmd requires [Python](https://python.org) 3.8.6 or later. It is available on PyPI, and can, for instance, be installed with `pip install gptcmd` at a command line shell. Running `gptcmd` at a shell starts the application. If Python's `bin` or `scripts` directory isn't on your path, you may need to launch the application with a command like `~/.local/bin/gptcmd` (depending on your system configuration). In most cases though, `gptcmd` should "just work".
+Gptcmd requires [Python](https://python.org) 3.7.1. Python 3.8.6 or later is strongly recommended and will be required to run future releases. Gptcmd is available on PyPI, and can, for instance, be installed with `pip install gptcmd` at a command line shell. Running `gptcmd` at a shell starts the application. If Python's `bin` or `scripts` directory isn't on your path, you may need to launch the application with a command like `~/.local/bin/gptcmd` (depending on your system configuration). In most cases though, `gptcmd` should "just work".
 
 If you'd like to use OpenAI models and you don't have an OpenAI account, you'll need to create one and [add some credit](https://platform.openai.com/account/billing/overview). $5 or so goes very far, [especially on `gpt-4o-mini`](#model-selection).
 
