@@ -1097,20 +1097,6 @@ class Gptcmd(cmd.Cmd):
         try:
             msg = self._current_thread[idx]
             msg.attachments.append(img)
-            if (
-                not (
-                    "gpt-4-turbo" in self._account.provider.model
-                    or "gpt-4o" in self._account.provider.model
-                    or "vision" in self._account.provider.model
-                )
-                and "gpt-4-turbo" in self._account.provider.valid_models
-            ):
-                print(
-                    "Warning! The selected model may not support vision. "
-                    "If sending this conversation fails, try switching to a "
-                    "vision-capable model with the following command:\n"
-                    "model gpt-4-turbo"
-                )
             print(self.__class__._fragment("Image added to {msg}", msg))
         except IndexError:
             print("Message doesn't exist")
