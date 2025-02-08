@@ -113,46 +113,51 @@ class Gptcmd(cmd.Cmd):
 
     @staticmethod
     def _user_range_to_python_range(
-        ref: str,
+        ref: str, allow_single: bool = True, strict_range: bool = True
     ) -> Tuple[Optional[int], Optional[int]]:
-        c = ref.count(" ")
-        if c == 0:
-            if ref == ".":
+        tokens = ref.split()
+        if not tokens:
+            raise ValueError("No indices provided")
+        if len(tokens) == 1:
+            if tokens[0] == ".":
                 return (None, None)
-            start = end = ref
-        elif c == 1:
-            start, end = ref.split()
+            if not allow_single:
+                raise ValueError("Wrong number of indices")
+            start = end = tokens[0]
+        elif len(tokens) == 2:
+            start, end = tokens
         else:
             raise ValueError("Wrong number of indices")
 
-        if start == ".":
-            py_start = None
-        else:
-            py_start = int(start)
-            if py_start > 0:
-                py_start -= 1  # Python indices are zero-based
-        if end == ".":
-            py_end = None
-        else:
-            py_end = int(end)
-            if py_end > 0:
-                py_end -= 1  # Python indices are zero-based
-                py_end += 1  # Python indices are end exclusive
-            elif py_end == -1:
-                py_end = None
+        def _convert(token: str, is_start: bool) -> Optional[int]:
+            if token == ".":
+                return None
+            val = int(token)
+            if is_start:
+                return val - 1 if val > 0 else val
             else:
-                py_end += 1  # Python indices are end exclusive
+                if val > 0:
+                    return val
+                elif val == -1:
+                    return None
+                else:
+                    return val + 1
 
-        if c == 0:
-            # Don't return an empty range
+        py_start = _convert(start, True)
+        py_end = _convert(end, False)
+
+        if len(tokens) == 1:
             if py_start == -1:
                 py_end = None
             elif py_start is not None:
                 py_end = py_start + 1
-
-        if py_start is not None and py_end is not None and py_start >= py_end:
+        if (
+            strict_range
+            and py_start is not None
+            and py_end is not None
+            and py_start >= py_end
+        ):
             raise ValueError("Range end is beyond its start")
-
         return py_start, py_end
 
     @staticmethod
