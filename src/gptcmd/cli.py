@@ -517,7 +517,9 @@ class Gptcmd(cmd.Cmd):
             print("Usage: move <from> <to>")
             return
         try:
-            i, j = self._user_range_to_python_range(arg)
+            i, j = self._user_range_to_python_range(
+                arg, allow_single=False, strict_range=False
+            )
         except ValueError:
             print("Invalid range specified")
             return
