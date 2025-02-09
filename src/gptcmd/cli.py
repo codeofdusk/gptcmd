@@ -13,6 +13,7 @@ import cmd
 import concurrent.futures
 import dataclasses
 import datetime
+import difflib
 import json
 import os
 import re
@@ -29,6 +30,7 @@ from typing import (
     Dict,
     List,
     Optional,
+    Sequence,
     Tuple,
 )
 
@@ -207,6 +209,31 @@ class Gptcmd(cmd.Cmd):
             except concurrent.futures.TimeoutError:
                 continue
 
+    @staticmethod
+    def _menu(prompt: str, options: List[str]) -> Optional[str]:
+        """
+        Display a menu of options and return the chosen item, or None
+        if canceled.
+        """
+        while True:
+            print(
+                prompt,
+                "0. Cancel",
+                *(
+                    f"{i}. {option}"
+                    for i, option in enumerate(options, start=1)
+                ),
+                sep="\n",
+            )
+            selection = input("Enter your selection: ")
+            if not selection.isdigit():
+                continue
+            choice = int(selection)
+            if choice == 0:
+                return None
+            if 1 <= choice <= len(options):
+                return options[choice - 1]
+
     KNOWN_ROLES = tuple(MessageRole)
 
     @classmethod
@@ -216,6 +243,83 @@ class Gptcmd(cmd.Cmd):
     @classmethod
     def _validate_role(cls, role: str) -> bool:
         return role in cls.KNOWN_ROLES
+
+    @classmethod
+    def _disambiguate(
+        cls, user_input: str, choices: Sequence[str]
+    ) -> Optional[str]:
+        DIFFLIB_CUTOFF = 0.5
+        MAX_MATCHES = 9
+
+        in_lower = user_input.lower()
+        matches = difflib.get_close_matches(
+            user_input,
+            choices,
+            n=MAX_MATCHES,
+            cutoff=DIFFLIB_CUTOFF,
+        )
+
+        if len(user_input) > 2:
+            matches.extend(
+                [
+                    c
+                    for c in choices
+                    if in_lower in c.lower() and c not in matches
+                ]
+            )
+
+        if not matches:
+            return None
+
+        ratio = {
+            c: difflib.SequenceMatcher(None, user_input, c).ratio()
+            for c in matches
+        }
+
+        def _has_non_digit_suffix(s: str) -> int:
+            # 1 when the last hyphen/underscore-separated token is not
+            # purely digits, 0 otherwise.
+            last = re.split(r"[-_]", s)[-1]
+            return int(not last.isdigit())
+
+        def _max_numeric_token(s: str) -> int:
+            # Greatest integer appearing anywhere in the candidate, or ‑1
+            nums = re.findall(r"\d+", s)
+            return max(map(int, nums)) if nums else -1
+
+        matches = sorted(
+            matches,
+            key=lambda c: (
+                # Literal match (prefer prefix)
+                (
+                    0
+                    if c.lower().startswith(in_lower)
+                    else 1 if in_lower in c.lower() else 2
+                ),
+                # Suffix match (prefer non-digit)
+                # Heuristic: Prefer unversioned model aliases
+                -_has_non_digit_suffix(c),
+                # Difflib match (best first)
+                -ratio[c],
+                # Length match (shortest first)
+                # Heuristic: Prefer unversioned model aliases
+                len(c),
+                # Numeric match (prefer larger numbers)
+                # Heuristic: Prefer later model versions
+                -_max_numeric_token(c),
+                # Fallback: Lexicographic order
+                c,
+            ),
+        )[:MAX_MATCHES]
+
+        if len(matches) == 1:
+            c = matches[0]
+            match = c if cls._confirm(f"Did you mean {c!r}?") else None
+        else:
+            match = cls._menu("Did you mean one of these?", matches)
+        if match is None:
+            print("Cancelled")
+        return match
 
     def emptyline(self):
         "Disable Python cmd's repeat last command behaviour."
@@ -740,6 +844,10 @@ class Gptcmd(cmd.Cmd):
                 print(f"Switched to model {self._account.provider.model!r}")
         else:
             print(f"{arg} is currently unavailable")
+            valid_models = self._account.provider.valid_models or ()
+            match = self.__class__._disambiguate(arg, valid_models)
+            if match and match != arg:
+                self.do_model(match, _print_on_success=_print_on_success)
 
     def do_set(self, arg):
         """
