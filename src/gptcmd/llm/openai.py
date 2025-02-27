@@ -96,6 +96,10 @@ class OpenAI(LLMProvider):
                 Decimal("3") / Decimal("1000000"),
                 Decimal("12") / Decimal("1000000"),
             ),
+            "gpt-4.5-preview-2025-02-27": (
+                Decimal("75") / Decimal("1000000"),
+                Decimal("150") / Decimal("1000000"),
+            ),
             "gpt-4o-2024-11-20": (
                 Decimal("2.5") / Decimal("1000000"),
                 Decimal("10") / Decimal("1000000"),
