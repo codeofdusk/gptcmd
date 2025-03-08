@@ -38,7 +38,7 @@ from .message import (
 )
 
 
-__version__ = "2.0.3"
+__version__ = "2.1.0"
 
 
 def input_with_handling(_input: Callable) -> Callable:
@@ -1140,6 +1140,7 @@ class Gptcmd(cmd.Cmd):
                 mode="w",
                 delete=False,
                 encoding="utf-8",
+                errors="ignore",
             ) as cam:
                 cam.write(initial_text)
                 tempname = cam.name
