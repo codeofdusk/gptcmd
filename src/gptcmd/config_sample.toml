@@ -1,7 +1,7 @@
 # Gptcmd configuration
 
 # This option is used by the application for version tracking.
-schema_version = "1.0.0"
+schema_version = "1.1.0"
 
 # This option controls the formatting of the prompt.
 # The following keywords (when placed in braces) are replaced by:
@@ -49,6 +49,17 @@ show_token_usage = true
 # Unless you know that you have a specific need to create empty messages,
 # "never" is recommended.
 allow_add_empty_messages = "never"
+
+# This option controls what Gptcmd does when the user runs `retry` from
+# a named thread.
+# When this option is set to "always", a new thread will be created on retry,
+# replicating Gptcmd's behaviour before version 2.1.0.
+# When this option is set to "ask", Gptcmd will prompt the user whether to
+# create a new thread for this retried query or to overwrite the
+# existing contents, similar to Gptcmd's behaviour in the detached thread.
+# When this option is set to "never", Gptcmd always overwrites previous
+# assistant contents with the retried query in both detached and named threads.
+create_new_thread_on_retry = "always"
 
 # Account Configuration
 # The following sections configure Gptcmd's connections to large language model provider accounts.

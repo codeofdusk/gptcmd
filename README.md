@@ -583,7 +583,7 @@ where:
 ψ = (1 - √5) / 2
 ```
 
-When running `retry` in a named thread, a new thread is created so that both responses are preserved:
+When running `retry` in a named thread, by default a new thread is created so that both responses are preserved (this can be changed in Gptcmd configuration):
 
 ```
 induction(gpt-4o) say Responding in a short paragraph and without showing your algebra, prove by induction that this formula is equivalent to the recursive definition.

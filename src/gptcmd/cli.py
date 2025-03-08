@@ -637,6 +637,10 @@ class Gptcmd(cmd.Cmd):
             print("Nothing to retry!")
             return
         if self._current_thread != self._detached:
+            create_new_thread_on_retry = self.config.conf.get(
+                "create_new_thread_on_retry", "always"
+            )
+            should_create = None
             is_numbered_thread = re.match(
                 r"(.*?)(\d+$)", self._current_thread.name
             )
@@ -651,7 +655,19 @@ class Gptcmd(cmd.Cmd):
                 num = 2
             while basename + str(num) in self._threads:
                 num += 1
-            self.do_thread(basename + str(num))
+            newname = basename + str(num)
+
+            if create_new_thread_on_retry == "ask":
+                should_create = self.__class__._confirm(
+                    f"Create thread {newname!r}?"
+                )
+            elif create_new_thread_on_retry == "never":
+                should_create = False
+            else:
+                should_create = True
+
+            if should_create:
+                self.do_thread(newname)
         for i in range(len(self._current_thread) - 1, -1, -1):
             role = self._current_thread[i].role
             if role == MessageRole.ASSISTANT:
