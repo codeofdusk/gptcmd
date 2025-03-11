@@ -28,9 +28,9 @@ Gptcmd uses instances of the `LLMProvider` abstract class to interact with large
 * **Purpose**: Return the name of the most capable model offered by this provider.
 * **Usage**: This method helps in selecting a default model if none is otherwise configured.
 
-#### `valid_models(self) -> Iterable[str]`
+#### `valid_models(self) -> Optional[Iterable[str]]`
 
-* **Purpose**: Provide a collection of valid model names that can be used with this provider.
+* **Purpose**: Provide a collection of valid model names that can be used with this provider. If a list of valid models cannot be determined in this session, return `None`.
 * **Usage**: Used during validation when switching the active model.
 
 ### Supporting classes and exceptions
@@ -103,7 +103,7 @@ Create an `src` directory inside `gptcmd-echo-provider`. Inside that directory, 
 Create a new file, `gptcmd-echo-provider/src/gptcmd_echo_provider/echo.py`, with the following content:
 
 ``` python
-from typing import Any, Dict, Sequence
+from typing import Any, Dict, Iterable, Sequence
 
 from gptcmd.llm import (
     CompletionError,
@@ -148,7 +148,7 @@ Since this provider is just an example, we'll only support one model called `ech
         return "echo-1"
 
     @property
-    def valid_models(self) -> Sequence[str]:
+    def valid_models(self) -> Iterable[str]:
         return ("echo-1",)
 ```
 

@@ -37,7 +37,6 @@ from .message import (
     PopStickyMessageError,
 )
 
-
 __version__ = "2.1.0"
 
 
@@ -686,7 +685,16 @@ class Gptcmd(cmd.Cmd):
         """
         if not arg:
             print(f"Current model: {self._account.provider.model}")
-        elif arg in self._account.provider.valid_models:
+            return
+        if self._account.provider.valid_models is None:
+            is_valid_model = self.__class__._confirm(
+                f"{self._account.name} does not support model validation. "
+                "If this model does not exist, requests to it will fail. "
+                "Switch anyway?"
+            )
+        else:
+            is_valid_model = arg in self._account.provider.valid_models
+        if is_valid_model:
             self._account.provider.model = arg
             if _print_on_success:
                 print(f"Switched to model {self._account.provider.model!r}")

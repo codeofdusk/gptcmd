@@ -96,7 +96,7 @@ class LLMProvider(ABC):
 
     @property
     @abstractmethod
-    def valid_models(self) -> Iterable[str]:
+    def valid_models(self) -> Optional[Iterable[str]]:
         """
         A collection of model names that can be set on this LLM provider
         """

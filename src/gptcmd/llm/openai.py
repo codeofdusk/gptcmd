@@ -31,7 +31,13 @@ class OpenAI(LLMProvider):
 
     def __init__(self, client, *args, **kwargs):
         self._client = client
-        self._models = {m.id for m in self._client.models.list().data}
+        try:
+            self._models = {m.id for m in self._client.models.list().data}
+        except openai.NotFoundError:
+            # Some OpenAI-like APIs implement a chat completions endpoint but
+            # don't offer a list of models.
+            # For these APIs, disable model validation.
+            self._models = None
         super().__init__(*args, **kwargs)
         self._stream = True
 
@@ -265,7 +271,10 @@ class OpenAI(LLMProvider):
             None,
         )
         if res is None:
-            raise RuntimeError("No known GPT model available!")
+            raise RuntimeError(
+                "No known GPT model available! If this is an OpenAI-like API, "
+                "set the model explicitly"
+            )
         else:
             return res
 
