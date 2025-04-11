@@ -198,7 +198,9 @@ class OpenAI(LLMProvider):
             raise CompletionError(str(e)) from e
         if isinstance(resp, openai.Stream):
             return StreamedOpenAIResponse(resp, self)
-        if len(resp.choices) != 1:
+        if resp.choices is None:
+            raise CompletionError("Empty response (no choices specified)")
+        elif len(resp.choices) != 1:
             raise CompletionError(
                 f"Unexpected number of choices ({len(resp.choices)}) from"
                 " OpenAI response"
