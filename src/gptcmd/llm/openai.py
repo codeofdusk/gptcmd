@@ -102,6 +102,10 @@ class OpenAI(LLMProvider):
                 Decimal("3") / Decimal("1000000"),
                 Decimal("12") / Decimal("1000000"),
             ),
+            "gpt-4.1-2025-04-14": (
+                Decimal("2") / Decimal("1000000"),
+                Decimal("8") / Decimal("1000000"),
+            ),
             "gpt-4.5-preview-2025-02-27": (
                 Decimal("75") / Decimal("1000000"),
                 Decimal("150") / Decimal("1000000"),
@@ -117,6 +121,14 @@ class OpenAI(LLMProvider):
             "gpt-4o-2024-05-13": (
                 Decimal("5") / Decimal("1000000"),
                 Decimal("15") / Decimal("1000000"),
+            ),
+            "gpt-4.1-mini-2025-04-14": (
+                Decimal("0.4") / Decimal("1000000"),
+                Decimal("1.6") / Decimal("1000000"),
+            ),
+            "gpt-4.1-nano-2025-04-14": (
+                Decimal("0.1") / Decimal("1000000"),
+                Decimal("0.4") / Decimal("1000000"),
             ),
             "gpt-4o-mini-2024-07-18": (
                 Decimal("0.15") / Decimal("1000000"),
@@ -164,12 +176,14 @@ class OpenAI(LLMProvider):
             ),
         }
 
-        CACHE_DISCOUNT_FACTOR: Decimal = Decimal("0.5")
+        cache_discount_factor: Decimal = (
+            Decimal("0.25") if model.startswith("gpt-4.1") else Decimal("0.5")
+        )
 
         if model not in COST_PER_PROMPT_SAMPLED:
             return None
         prompt_scale, sampled_scale = COST_PER_PROMPT_SAMPLED[model]
-        cached_prompt_scale = prompt_scale * CACHE_DISCOUNT_FACTOR
+        cached_prompt_scale = prompt_scale * cache_discount_factor
         uncached_prompt_tokens = prompt_tokens - cached_prompt_tokens
         return (
             Decimal(uncached_prompt_tokens) * prompt_scale
