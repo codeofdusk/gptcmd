@@ -91,6 +91,11 @@ class OpenAI(LLMProvider):
         sampled_tokens: int,
     ) -> Optional[Decimal]:
         COST_PER_PROMPT_SAMPLED: Dict[str, ModelCostInfo] = {
+            "o3-2025-04-16": ModelCostInfo(
+                Decimal("10") / Decimal("1000000"),
+                Decimal("40") / Decimal("1000000"),
+                Decimal("0.25"),
+            ),
             "o1-2024-12-17": ModelCostInfo(
                 Decimal("15") / Decimal("1000000"),
                 Decimal("60") / Decimal("1000000"),
@@ -100,6 +105,11 @@ class OpenAI(LLMProvider):
                 Decimal("15") / Decimal("1000000"),
                 Decimal("60") / Decimal("1000000"),
                 Decimal("0.5"),
+            ),
+            "o4-mini-2025-04-16": ModelCostInfo(
+                Decimal("1.1") / Decimal("1000000"),
+                Decimal("4.4") / Decimal("1000000"),
+                Decimal("0.25"),
             ),
             "o3-mini-2025-01-31": ModelCostInfo(
                 Decimal("1.1") / Decimal("1000000"),
