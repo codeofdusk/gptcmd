@@ -8,8 +8,9 @@ file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 import inspect
 
+from collections import namedtuple
 from decimal import Decimal
-from typing import Any, Dict, Iterable, Optional, Sequence, Tuple
+from typing import Any, Dict, Iterable, Optional, Sequence
 
 from . import (
     CompletionError,
@@ -21,6 +22,10 @@ from . import (
 from ..message import Image, Message, MessageRole
 
 import openai
+
+ModelCostInfo = namedtuple(
+    "ModelCostInfo", ("prompt_scale", "sampled_scale", "cache_discount_factor")
+)
 
 
 class OpenAI(LLMProvider):
@@ -85,110 +90,128 @@ class OpenAI(LLMProvider):
         cached_prompt_tokens: int,
         sampled_tokens: int,
     ) -> Optional[Decimal]:
-        COST_PER_PROMPT_SAMPLED: Dict[str, Tuple[Decimal, Decimal]] = {
-            "o1-2024-12-17": (
+        COST_PER_PROMPT_SAMPLED: Dict[str, ModelCostInfo] = {
+            "o1-2024-12-17": ModelCostInfo(
                 Decimal("15") / Decimal("1000000"),
                 Decimal("60") / Decimal("1000000"),
+                Decimal("0.5"),
             ),
-            "o1-preview-2024-09-12": (
+            "o1-preview-2024-09-12": ModelCostInfo(
                 Decimal("15") / Decimal("1000000"),
                 Decimal("60") / Decimal("1000000"),
+                Decimal("0.5"),
             ),
-            "o3-mini-2025-01-31": (
+            "o3-mini-2025-01-31": ModelCostInfo(
                 Decimal("1.1") / Decimal("1000000"),
                 Decimal("4.4") / Decimal("1000000"),
+                Decimal("0.5"),
             ),
-            "o1-mini-2024-09-12": (
+            "o1-mini-2024-09-12": ModelCostInfo(
                 Decimal("3") / Decimal("1000000"),
                 Decimal("12") / Decimal("1000000"),
+                Decimal("0.5"),
             ),
-            "gpt-4.1-2025-04-14": (
+            "gpt-4.1-2025-04-14": ModelCostInfo(
                 Decimal("2") / Decimal("1000000"),
                 Decimal("8") / Decimal("1000000"),
+                Decimal("0.25"),
             ),
-            "gpt-4.5-preview-2025-02-27": (
+            "gpt-4.5-preview-2025-02-27": ModelCostInfo(
                 Decimal("75") / Decimal("1000000"),
                 Decimal("150") / Decimal("1000000"),
+                Decimal("0.5"),
             ),
-            "gpt-4o-2024-11-20": (
+            "gpt-4o-2024-11-20": ModelCostInfo(
                 Decimal("2.5") / Decimal("1000000"),
                 Decimal("10") / Decimal("1000000"),
+                Decimal("0.5"),
             ),
-            "gpt-4o-2024-08-06": (
+            "gpt-4o-2024-08-06": ModelCostInfo(
                 Decimal("2.5") / Decimal("1000000"),
                 Decimal("10") / Decimal("1000000"),
+                Decimal("0.5"),
             ),
-            "gpt-4o-2024-05-13": (
+            "gpt-4o-2024-05-13": ModelCostInfo(
                 Decimal("5") / Decimal("1000000"),
                 Decimal("15") / Decimal("1000000"),
+                Decimal("0.5"),
             ),
-            "gpt-4.1-mini-2025-04-14": (
+            "gpt-4.1-mini-2025-04-14": ModelCostInfo(
                 Decimal("0.4") / Decimal("1000000"),
                 Decimal("1.6") / Decimal("1000000"),
+                Decimal("0.25"),
             ),
-            "gpt-4.1-nano-2025-04-14": (
+            "gpt-4.1-nano-2025-04-14": ModelCostInfo(
                 Decimal("0.1") / Decimal("1000000"),
                 Decimal("0.4") / Decimal("1000000"),
+                Decimal("0.25"),
             ),
-            "gpt-4o-mini-2024-07-18": (
+            "gpt-4o-mini-2024-07-18": ModelCostInfo(
                 Decimal("0.15") / Decimal("1000000"),
                 Decimal("0.6") / Decimal("1000000"),
+                Decimal("0.5"),
             ),
-            "gpt-4-turbo-2024-04-09": (
+            "gpt-4-turbo-2024-04-09": ModelCostInfo(
                 Decimal("10") / Decimal("1000000"),
                 Decimal("30") / Decimal("1000000"),
+                Decimal("0.5"),
             ),
-            "gpt-4-0125-preview": (
+            "gpt-4-0125-preview": ModelCostInfo(
                 Decimal("10") / Decimal("1000000"),
                 Decimal("30") / Decimal("1000000"),
+                Decimal("0.5"),
             ),
-            "gpt-4-1106-preview": (
+            "gpt-4-1106-preview": ModelCostInfo(
                 Decimal("10") / Decimal("1000000"),
                 Decimal("30") / Decimal("1000000"),
+                Decimal("0.5"),
             ),
-            "gpt-4-1106-vision-preview": (
+            "gpt-4-1106-vision-preview": ModelCostInfo(
                 Decimal("10") / Decimal("1000000"),
                 Decimal("30") / Decimal("1000000"),
+                Decimal("0.5"),
             ),
-            "gpt-4-0613": (
+            "gpt-4-0613": ModelCostInfo(
                 Decimal("30") / Decimal("1000000"),
                 Decimal("60") / Decimal("1000000"),
+                Decimal("0.5"),
             ),
-            "gpt-3.5-turbo-0125": (
+            "gpt-3.5-turbo-0125": ModelCostInfo(
                 Decimal("0.5") / Decimal("1000000"),
                 Decimal("1.5") / Decimal("1000000"),
+                Decimal("0.5"),
             ),
-            "gpt-3.5-turbo-1106": (
+            "gpt-3.5-turbo-1106": ModelCostInfo(
                 Decimal("1") / Decimal("1000000"),
                 Decimal("2") / Decimal("1000000"),
+                Decimal("0.5"),
             ),
-            "gpt-3.5-turbo-0613": (
+            "gpt-3.5-turbo-0613": ModelCostInfo(
                 Decimal("1.5") / Decimal("1000000"),
                 Decimal("2") / Decimal("1000000"),
+                Decimal("0.5"),
             ),
-            "gpt-3.5-turbo-16k-0613": (
+            "gpt-3.5-turbo-16k-0613": ModelCostInfo(
                 Decimal("3") / Decimal("1000000"),
                 Decimal("4") / Decimal("1000000"),
+                Decimal("0.5"),
             ),
-            "gpt-3.5-turbo-0301": (
+            "gpt-3.5-turbo-0301": ModelCostInfo(
                 Decimal("1.5") / Decimal("1000000"),
                 Decimal("2") / Decimal("1000000"),
+                Decimal("0.5"),
             ),
         }
 
-        cache_discount_factor: Decimal = (
-            Decimal("0.25") if model.startswith("gpt-4.1") else Decimal("0.5")
-        )
-
         if model not in COST_PER_PROMPT_SAMPLED:
             return None
-        prompt_scale, sampled_scale = COST_PER_PROMPT_SAMPLED[model]
-        cached_prompt_scale = prompt_scale * cache_discount_factor
+        info = COST_PER_PROMPT_SAMPLED[model]
+        cached_prompt_scale = info.prompt_scale * info.cache_discount_factor
         uncached_prompt_tokens = prompt_tokens - cached_prompt_tokens
         return (
-            Decimal(uncached_prompt_tokens) * prompt_scale
+            Decimal(uncached_prompt_tokens) * info.prompt_scale
             + Decimal(cached_prompt_tokens) * cached_prompt_scale
-            + Decimal(sampled_tokens) * sampled_scale
+            + Decimal(sampled_tokens) * info.sampled_scale
         ) * Decimal("100")
 
     def complete(self, messages: Sequence[Message]) -> LLMResponse:
