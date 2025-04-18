@@ -16,7 +16,7 @@ import shutil
 from functools import cached_property
 from importlib import resources
 from importlib.metadata import entry_points
-from typing import Any, Dict, List, Optional, Type, Union
+from typing import Any, Dict, List, Optional, Set, Type, Union
 
 if sys.version_info >= (3, 11):
     import tomllib
@@ -67,6 +67,11 @@ class Account:
 class ConfigManager:
     "Handles Gptcmd's configuration system."
 
+    SYSTEM_MACRO_PREFIX = "__"
+    SYSTEM_MACRO_SUFFIX = "__"
+    # Basenames for macros reserved for internal use
+    _SYSTEM_MACRO_BASENAMES: Set[str] = set()
+
     def __init__(
         self,
         config: Dict,
@@ -85,8 +90,8 @@ class ConfigManager:
         their_major = int(config["schema_version"].split(".")[0])
         if their_major > my_major:
             raise ConfigError(
-                "This configuration is too new for the current version"
-                " of Gptcmd!"
+                "This configuration is too new for the current version "
+                "of Gptcmd!"
             )
 
         conf.update(config)
@@ -195,6 +200,40 @@ class ConfigManager:
             self.conf.get("editor") or self.__class__._get_default_editor()
         )
         return shlex.split(editor, posix=posix)
+
+    @cached_property
+    def macros(self) -> Dict[str, str]:
+        section = self.conf.get("macros", {})
+        if not isinstance(section, dict):
+            raise ConfigError("Macros section must be a table")
+        for k, v in section.items():
+            if not isinstance(k, str):
+                raise ConfigError("Macro names must be strings")
+            if any(c.isspace() for c in k):
+                raise ConfigError(
+                    f"Macro name {k!r} cannot contain whitespace"
+                )
+            if not isinstance(v, str):
+                raise ConfigError(f"Macro {k!r} must be a string")
+            if (
+                k.startswith(self.SYSTEM_MACRO_PREFIX)
+                and k.endswith(self.SYSTEM_MACRO_SUFFIX)
+                and k not in self.valid_system_macro_names
+            ):
+                raise ConfigError(f"Unknown system macro {k!r}")
+        return section.copy()
+
+    @property
+    def valid_system_macro_names(self):
+        """Complete system macro names (for validation)"""
+        return {
+            (
+                self.__class__.SYSTEM_MACRO_PREFIX
+                + name
+                + self.__class__.SYSTEM_MACRO_SUFFIX
+            )
+            for name in self.__class__._SYSTEM_MACRO_BASENAMES
+        }
 
     @staticmethod
     def _get_config_root():

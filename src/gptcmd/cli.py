@@ -36,6 +36,7 @@ from typing import (
 
 from .config import ConfigError, ConfigManager
 from .llm import CompletionError, InvalidAPIParameterError, LLMProviderFeature
+from .macros import MacroError, MacroRunner
 from .message import (
     Image,
     Message,
@@ -77,6 +78,7 @@ class Gptcmd(cmd.Cmd):
         self.thread_cls = thread_cls
         self.last_path = None
         self.config = config or ConfigManager.from_toml()
+        self._check_macro_names()
         self._account = self.config.default_account
         self._detached = self.thread_cls("*detached*")
         self._current_thread = self._detached
@@ -86,6 +88,7 @@ class Gptcmd(cmd.Cmd):
         self._future_executor = concurrent.futures.ThreadPoolExecutor(
             max_workers=1
         )
+        self._macro_runner = MacroRunner(self)
         super().__init__(*args, **kwargs)
 
     @property
@@ -336,9 +339,35 @@ class Gptcmd(cmd.Cmd):
             print("Cancelled")
         return match
 
+    def _check_macro_names(self) -> None:
+        """Raise if any macro name collides with a built-in command."""
+        builtin_cmds = {
+            attr[3:]  # strip leading 'do_'
+            for attr in dir(self.__class__)
+            if attr.startswith("do_")
+            and callable(getattr(self.__class__, attr))
+        }
+        for overlap in builtin_cmds & self.config.macros.keys():
+            raise ConfigError(f"Invalid macro name {overlap!r}")
+
     def emptyline(self):
         "Disable Python cmd's repeat last command behaviour."
         pass
+
+    def default(self, line: str) -> bool:
+        name, arg, _ = self.parseline(line)
+        if name and name in self.config.macros:
+            is_system_macro = name.startswith(
+                self.config.SYSTEM_MACRO_PREFIX
+            ) and name.endswith(self.config.SYSTEM_MACRO_SUFFIX)
+            if not is_system_macro:
+                try:
+                    args = shlex.split(arg, posix=True)
+                except ValueError as e:
+                    print(f"Error parsing macro arguments: {e}")
+                    return False
+                return self._run_macro(name, args)
+        return super().default(line)
 
     def cmdloop(self, *args, **kwargs):
         old_input = cmd.__builtins__["input"]
@@ -435,6 +464,17 @@ class Gptcmd(cmd.Cmd):
         if _print_on_success:
             print(self.__class__._fragment("{msg} added as " + actor, msg))
         return msg
+
+    def _run_macro(self, name: str, args: List[str]) -> bool:
+        definition = self.config.macros[name]
+        try:
+            return self._macro_runner.run(name, definition, args)
+        except MacroError as e:
+            line_info = (
+                f", line {e.line_num}" if e.line_num is not None else ""
+            )
+            print(f"Error in macro {name!r}{line_info}: {e}")
+        return False
 
     def do_user(self, arg):
         """
