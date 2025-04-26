@@ -14,7 +14,6 @@ import mimetypes
 import sys
 from abc import ABC, abstractmethod
 from collections.abc import Sequence
-from enum import auto
 from typing import (
     Any,
     Callable,
@@ -30,8 +29,10 @@ from typing import (
 
 if sys.version_info >= (3, 11):
     from enum import StrEnum
-else:
+elif sys.version_info >= (3, 8, 6):
     from backports.strenum import StrEnum
+else:
+    from strenum import StrEnum
 
 
 T = TypeVar("T")
@@ -192,9 +193,14 @@ class MessageRole(StrEnum):
     Message objects
     """
 
-    USER = auto()
-    ASSISTANT = auto()
-    SYSTEM = auto()
+    # Don't use enum.auto() to define member values since its behaviour
+    # differs between strenum and enum.
+    # When gptcmd no longer supports Python 3.7, we can migrate to the
+    # backports.strenum package.
+
+    USER = "user"
+    ASSISTANT = "assistant"
+    SYSTEM = "system"
 
 
 @dataclasses.dataclass
