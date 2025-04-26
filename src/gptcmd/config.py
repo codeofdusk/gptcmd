@@ -7,7 +7,6 @@ License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at https://mozilla.org/MPL/2.0/.
 """
 
-
 import dataclasses
 import os
 import sys
@@ -29,7 +28,6 @@ else:
 
 from .llm import LLMProvider
 from .llm.openai import AzureAI, OpenAI
-
 
 DEFAULT_PROVIDERS: Dict[str, Type[LLMProvider]] = {
     "openai": OpenAI,
@@ -134,7 +132,7 @@ class ConfigManager:
         try:
             with open(config_path, "rb") as fin:
                 return cls(tomllib.load(fin))
-        except (FileNotFoundError, OSError, tomllib.TOMLDecodeError) as e:
+        except (OSError, tomllib.TOMLDecodeError) as e:
             raise ConfigError(str(e)) from e
 
     def _configure_accounts(

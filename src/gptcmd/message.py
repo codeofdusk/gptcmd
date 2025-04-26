@@ -7,7 +7,6 @@ License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at https://mozilla.org/MPL/2.0/.
 """
 
-
 import base64
 import dataclasses
 import mimetypes
@@ -150,7 +149,7 @@ class Image(MessageAttachment):
         with open(path, "rb") as fin:
             b64data = base64.b64encode(fin.read()).decode("utf-8")
         mimetype = mimetypes.guess_type(path)[0]
-        return cls(url=f"data:{mimetype};base64,{b64data}", *args, **kwargs)
+        return cls(*args, url=f"data:{mimetype};base64,{b64data}", **kwargs)
 
     @classmethod
     def _deserialize(cls, d: Dict[str, Any]) -> "Image":

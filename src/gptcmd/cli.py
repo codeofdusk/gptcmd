@@ -37,7 +37,6 @@ from .message import (
     PopStickyMessageError,
 )
 
-
 __version__ = "2.1.0"
 
 
@@ -981,7 +980,6 @@ class Gptcmd(cmd.Cmd):
             with open(path, encoding="utf-8") as fin:
                 d = json.load(fin)
         except (
-            FileNotFoundError,
             OSError,
             json.JSONDecodeError,
             UnicodeDecodeError,
@@ -1039,7 +1037,7 @@ class Gptcmd(cmd.Cmd):
                 self._append_new_message(
                     arg=fin.read(), role=role, _edit_on_empty=False
                 )
-        except (FileNotFoundError, OSError, UnicodeDecodeError) as e:
+        except (OSError, UnicodeDecodeError) as e:
             print(str(e))
             return
 
@@ -1124,7 +1122,7 @@ class Gptcmd(cmd.Cmd):
         else:
             try:
                 img = Image.from_path(self.__class__._shlex_path(location)[0])
-            except (OSError, FileNotFoundError, ValueError) as e:
+            except (OSError, ValueError) as e:
                 print(e)
                 return
         try:
@@ -1169,7 +1167,7 @@ class Gptcmd(cmd.Cmd):
             ) as cam:
                 cam.write(initial_text)
                 tempname = cam.name
-        except (FileNotFoundError, OSError, UnicodeEncodeError) as e:
+        except (OSError, UnicodeEncodeError) as e:
             print(e)
             return None
         except KeyboardInterrupt:
