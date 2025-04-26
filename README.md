@@ -313,6 +313,16 @@ If pi were equal to three point one four six two eight, then pi would be rationa
 Therefore, we conclude that pi is not exactly equal to three point one four six two eight.
 ```
 
+The `grep` command takes a [regular expression](https://en.wikipedia.org/wiki/Regular_expression) as an argument and searches the conversation for occurrences within its content, displaying the index and a small preview of each message that matches:
+
+```
+(gpt-4o) grep contra
+1 (system): '...prefer to use the technique of proof by [contra]diction at any...'
+3 (assistant): "...iven this assumption, we need to find a [contra]diction. Let's recall..."
+(gpt-4o) grep \d+
+2 (user): 'Prove that pi is not exactly equal to [3].[14628] without the use of any...'
+```
+
 The `edit` command with no arguments opens the contents of the last message in an external text editor for modification. Providing the index of a message to `edit` as an argument edits that message.
 
 ### Message streaming

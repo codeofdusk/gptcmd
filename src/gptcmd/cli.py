@@ -1390,6 +1390,46 @@ class Gptcmd(cmd.Cmd):
         except IndexError:
             print("Message doesn't exist")
 
+    def do_grep(self, arg):
+        """
+        Search the current thread for messages whose content matches the
+        supplied regex.
+        """
+        if not arg:
+            print("Usage: grep <regex>")
+            return
+        try:
+            expr = re.compile(arg)
+        except re.error as e:
+            print(e)
+            return
+
+        def _show(content: str, m: re.Match, width: int = 40) -> str:
+            start = max(0, m.start() - width)
+            end = min(len(content), m.end() + width)
+            res = content[start:end]
+            if start > 0:
+                res = "..." + res
+            if end < len(content):
+                res += "..."
+            return expr.sub(lambda x: f"[{x.group(0)}]", res)
+
+        found = False
+        for idx, msg in enumerate(self._current_thread.messages, start=1):
+            if not (m := expr.search(msg.content)):
+                continue
+            if m.end() == m.start():
+                continue
+            preview = self.__class__._fragment(
+                "{msg}", Message(content=_show(msg.content, m), role=msg.role)
+            )
+            name = msg.name if msg.name else msg.role
+            print(f"{msg.display_indicators}{idx} ({name}): {preview}")
+            found = True
+
+        if not found:
+            print("No hits!")
+
     def do_quit(self, arg):
         "Exit the program."
         warn = ""
