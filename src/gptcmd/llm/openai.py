@@ -374,6 +374,8 @@ class StreamedOpenAIResponse(LLMResponse):
             chunk = next(self._stream)
         except openai.OpenAIError as e:
             raise CompletionError(str(e)) from e
+        if chunk is None:
+            return ""
         if chunk.usage:
             prompt_tokens = chunk.usage.prompt_tokens
             prompt_tokens_details = getattr(
@@ -397,6 +399,8 @@ class StreamedOpenAIResponse(LLMResponse):
         if chunk.choices is None or len(chunk.choices) != 1:
             return ""
         delta = chunk.choices[0].delta
+        if delta is None:
+            return ""
         if delta.role and delta.role != self.message.role:
             self.message.role += delta.role
         if delta.content:
