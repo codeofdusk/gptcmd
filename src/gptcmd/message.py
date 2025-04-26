@@ -240,6 +240,14 @@ class Message:
         res["attachments"] = [a.to_dict() for a in self.attachments]
         return res
 
+    @property
+    def display_indicators(self):
+        """
+        Returns indicators for various states (sticky, has attachments, etc.)
+        for use in thread rendering and similar display scenarios.
+        """
+        return "*" * self.sticky + "@" * len(self.attachments)
+
 
 class PopStickyMessageError(Exception):
     "Thrown when attempting to pop a Message marked sticky"
@@ -337,8 +345,7 @@ class MessageThread(Sequence):
                 states (such as an asterisk for sticky messages)
         """
         lines = (
-            ("*" if display_indicators and msg.sticky else "")
-            + ("@" * len(msg.attachments) if display_indicators else "")
+            (msg.display_indicators if display_indicators else "")
             + (msg.name if msg.name is not None else msg.role)
             + ": "
             + msg.content
