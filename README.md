@@ -583,13 +583,14 @@ where:
 ψ = (1 - √5) / 2
 ```
 
-When running `retry` in a named thread, by default a new thread is created so that both responses are preserved (this can be changed in Gptcmd configuration):
+When running `retry` in a named thread, Gptcmd asks whether you'd like to create a new thread, preserving both responses (this can be changed in Gptcmd configuration):
 
 ```
 induction(gpt-4o) say Responding in a short paragraph and without showing your algebra, prove by induction that this formula is equivalent to the recursive definition.
 ...
 To prove the closed-form formula, known as Binet's formula, is equivalent to the recursive definition of the Fibonacci sequence, use mathematical induction. First, verify the base cases: for \( n = 0 \) and \( n = 1 \), evaluate the formula and confirm it gives the correct Fibonacci numbers \( F(0) = 0 \) and \( F(1) = 1 \). Next, assume the formula is true for \( n = k \) and \( n = k + 1 \), meaning \( F(k) \) and \( F(k+1) \) are correct. Prove it for \( n = k + 2 \) by showing that substituting these into the recursive relation \( F(k+2) = F(k+1) + F(k) \) satisfies the formula. The linear recurrence relations of φ and ψ ensure that φ and ψ raised to any integer power adhere to the Fibonacci sequence, maintaining the truth of the expression for all \( n \). This confirms the formula's validity by induction.
 induction(gpt-4o) retry
+Create thread 'induction2'? (y/n)y
 Switched to new thread 'induction2'
 ...
 To prove by induction that the closed-form formula for the nth Fibonacci number is equivalent to the recursive definition, we start with the base cases. For n=0 and n=1, the formula gives F(0) = 0 and F(1) = 1, which match the recursive definition. For the inductive step, assume that F(k) and F(k+1) are true as per the formula for some k. Then, F(k+2) can be written as F(k+2) = φ^(k+2)/√5 - ψ^(k+2)/√5, which simplifies to φ^k+1 + φ^k/√5 after using the induction hypothesis and algebraic manipulation with φ and ψ properties, thus matching the recursive definition F(k+2) = F(k+1) + F(k). This closes the induction, showing the equivalence of the closed-form and recursive definitions for all n.

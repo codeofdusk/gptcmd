@@ -59,7 +59,7 @@ allow_add_empty_messages = "never"
 # existing contents, similar to Gptcmd's behaviour in the detached thread.
 # When this option is set to "never", Gptcmd always overwrites previous
 # assistant contents with the retried query in both detached and named threads.
-create_new_thread_on_retry = "always"
+create_new_thread_on_retry = "ask"
 
 # Account Configuration
 # The following sections configure Gptcmd's connections to large language model provider accounts.
