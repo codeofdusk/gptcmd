@@ -7,6 +7,7 @@ file, You can obtain one at https://mozilla.org/MPL/2.0/.
 """
 
 import inspect
+import re
 
 from collections import namedtuple
 from decimal import Decimal
@@ -33,6 +34,8 @@ class OpenAI(LLMProvider):
         LLMProviderFeature.MESSAGE_NAME_FIELD
         | LLMProviderFeature.RESPONSE_STREAMING
     )
+
+    _reasoning_model_expr = re.compile(r"^o\d.*$")
 
     def __init__(self, client, *args, **kwargs):
         self._client = client
@@ -67,7 +70,7 @@ class OpenAI(LLMProvider):
         res = {
             "role": (
                 "developer"
-                if (self.model.startswith("o1") or self.model.startswith("o3"))
+                if self.__class__._reasoning_model_expr.match(self.model)
                 and msg.role == MessageRole.SYSTEM
                 else msg.role
             )
