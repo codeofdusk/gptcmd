@@ -32,6 +32,7 @@ from typing import (
     Optional,
     Sequence,
     Tuple,
+    Type,
 )
 
 from .config import ConfigError, ConfigManager
@@ -40,6 +41,7 @@ from .macros import MacroError, MacroRunner
 from .message import (
     Image,
     Message,
+    MessageAttachment,
     MessageRole,
     MessageThread,
     PopStickyMessageError,
@@ -312,7 +314,9 @@ class Gptcmd(cmd.Cmd):
                 (
                     0
                     if c.lower().startswith(in_lower)
-                    else 1 if in_lower in c.lower() else 2
+                    else 1
+                    if in_lower in c.lower()
+                    else 2
                 ),
                 # Suffix match (prefer non-digit)
                 # Heuristic: Prefer unversioned model aliases
@@ -1313,9 +1317,14 @@ class Gptcmd(cmd.Cmd):
             print(str(e))
             return
 
-    def do_image(self, arg):
-        "Attach an image at the specified location"
-        USAGE = "Usage: image <location> [message]"
+    def _attachment_url_helper(
+        self,
+        cmd_name: str,
+        attachment_type: Type[MessageAttachment],
+        arg: str,
+        success_callback: Optional[Callable[[Message], None]] = None,
+    ):
+        USAGE = f"Usage: {cmd_name} <location> [message]"
         m = re.match(r"^(.*?)(?:\s(-?\d+))?$", arg)
         if not m:
             print(USAGE)
@@ -1333,21 +1342,35 @@ class Gptcmd(cmd.Cmd):
         except ValueError:
             print("Invalid message specification")
             return
-        if location.startswith("http"):
-            img = Image(url=location)
-        else:
-            try:
-                img = Image.from_path(self.__class__._shlex_path(location)[0])
-            except (OSError, ValueError) as e:
-                print(e)
-                return
+        try:
+            if location.startswith("http"):
+                a = attachment_type(url=location)
+            else:
+                a = attachment_type.from_path(
+                    self.__class__._shlex_path(location)[0]
+                )
+        except (OSError, ValueError) as e:
+            print(e)
+            return
         try:
             msg = self._current_thread[idx]
-            msg.attachments.append(img)
-            print(self.__class__._fragment("Image added to {msg}", msg))
+            msg.attachments.append(a)
+            if success_callback:
+                success_callback(msg)
+            print(
+                self.__class__._fragment(
+                    attachment_type.__name__ + " added to {msg}", msg
+                )
+            )
         except IndexError:
             print("Message doesn't exist")
             return
+
+    def do_image(self, arg):
+        "Attach an image at the specified location"
+        return self._attachment_url_helper(
+            cmd_name="image", attachment_type=Image, arg=arg
+        )
 
     def do_account(self, arg, _print_on_success: bool = True):
         "Switch between configured accounts."

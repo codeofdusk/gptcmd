@@ -11,6 +11,9 @@ import base64
 import dataclasses
 import mimetypes
 import sys
+import urllib.parse
+import urllib.request
+from urllib.error import URLError, HTTPError
 from abc import ABC, abstractmethod
 from collections.abc import Sequence
 from enum import auto
@@ -134,31 +137,121 @@ class MessageAttachment(ABC):
         return self.to_dict() == other.to_dict()
 
 
-@attachment_type_registrar.register("image_url")
-class Image(MessageAttachment):
-    "An image reachable by URL that can be fetched by the LLM API."
+class FileAttachment(MessageAttachment):
+    "Base class for file-like attachments"
 
-    def __init__(self, url: str, detail: Optional[str] = None):
-        self.url = url
+    def __init__(
+        self,
+        url: Optional[str] = None,
+        b64: Optional[str] = None,
+        mimetype: Optional[str] = None,
+    ):
+        self.url: Optional[str] = None
+        self._b64: Optional[str] = None
+        self._mimetype: Optional[str] = None
+
+        if url and url.startswith("data:"):
+            header, b64 = url.split(",", 1)
+            self.url = url
+            self._b64 = b64
+            self._mimetype = header[5:].split(";")[0]
+            return
+
+        if url:
+            self.url = url
+            self._mimetype = mimetype
+            return
+
+        if b64 and mimetype:
+            self._b64 = b64
+            self._mimetype = mimetype
+            self.url = f"data:{mimetype};base64,{b64}"
+            return
+
+        raise ValueError("Provide either url or both b64 and mimetype")
+
+    @classmethod
+    def from_path(cls, path: str, **kwargs):
+        with open(path, "rb") as fin:
+            data = base64.b64encode(fin.read()).decode("utf-8")
+        mime = mimetypes.guess_type(path)[0] or "application/octet-stream"
+        return cls(b64=data, mimetype=mime, **kwargs)
+
+    @classmethod
+    def _deserialize(cls, d: Dict[str, Any]):
+        return cls(url=d["url"])
+
+    @property
+    def b64(self) -> str:
+        if self._b64 is None:
+            try:
+                with urllib.request.urlopen(self.url, timeout=20) as resp:
+                    raw = resp.read()
+            except (URLError, HTTPError) as exc:
+                raise ValueError(
+                    f"Unable to fetch data from {self.url}"
+                ) from exc
+            self._b64 = base64.b64encode(raw).decode("utf-8")
+            if self._mimetype is None:
+                ctype = resp.headers.get("Content-Type")
+                if ctype:
+                    self._mimetype = ctype.split(";")[0].strip()
+        return self._b64
+
+    @property
+    def mimetype(self) -> str:
+        if self._mimetype is None:
+            # First try to guess from the URL path
+            guess = mimetypes.guess_type(urllib.parse.urlparse(self.url).path)[
+                0
+            ]
+            if guess:
+                self._mimetype = guess
+            else:
+                # Last resort: trigger a fetch which may set _mimetype from
+                # the Content-Type header.
+                _ = self.b64
+                self._mimetype = self._mimetype or "application/octet-stream"
+        return self._mimetype
+
+    def _serialize(self) -> Dict[str, Any]:
+        return {"url": self.url}
+
+    def __eq__(self, other):
+        """
+        Equality is based on the actual file content (and mimetype) rather than
+        the original URL so that semantically identical attachments
+        compare equal even when their source URLs differ.
+        """
+        if not isinstance(other, FileAttachment):
+            return NotImplemented
+        return self.mimetype == other.mimetype and self.b64 == other.b64
+
+    def __hash__(self):
+        return hash((self.mimetype, self.b64))
+
+
+@attachment_type_registrar.register("image_url")
+class Image(FileAttachment):
+    "An image URL that can be fetched by the LLM API."
+
+    def __init__(self, *args, detail: Optional[str] = None, **kwargs):
+        super().__init__(*args, **kwargs)
         self.detail = detail
 
     @classmethod
-    def from_path(cls, path: str, *args, **kwargs):
-        "Instantiate an Image from a file"
-        with open(path, "rb") as fin:
-            b64data = base64.b64encode(fin.read()).decode("utf-8")
-        mimetype = mimetypes.guess_type(path)[0]
-        return cls(*args, url=f"data:{mimetype};base64,{b64data}", **kwargs)
+    def from_path(cls, path: str, detail: Optional[str] = None):
+        return super().from_path(path, detail=detail)
+
+    def _serialize(self) -> Dict[str, Any]:
+        res = super()._serialize()
+        if self.detail is not None:
+            res["detail"] = self.detail
+        return res
 
     @classmethod
     def _deserialize(cls, d: Dict[str, Any]) -> "Image":
         return cls(url=d["url"], detail=d.get("detail"))
-
-    def _serialize(self) -> Dict[str, Any]:
-        res = {"url": self.url}
-        if self.detail is not None:
-            res["detail"] = self.detail
-        return res
 
 
 class UnknownAttachment(MessageAttachment):
