@@ -1322,7 +1322,13 @@ class Gptcmd(cmd.Cmd):
                 print(f"Available accounts: {', '.join(others)}")
             return
         if arg in self.config.accounts:
-            self._account = self.config.accounts[arg]
+            candidate = self.config.accounts[arg]
+            try:
+                _ = candidate.provider  # Attempt to instantiate
+            except ConfigError as e:
+                print(str(e))
+                return
+            self._account = candidate
             if _print_on_success:
                 print(f"Switched to account {self._account.name!r}")
         else:

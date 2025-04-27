@@ -13,9 +13,10 @@ import sys
 import platform
 import shlex
 import shutil
+from functools import cached_property
 from importlib import resources
 from importlib.metadata import entry_points
-from typing import Dict, List, Optional, Type
+from typing import Any, Dict, List, Optional, Type, Union
 
 if sys.version_info >= (3, 11):
     import tomllib
@@ -38,7 +39,29 @@ class ConfigError(Exception):
 @dataclasses.dataclass(frozen=True)
 class Account:
     name: str
-    provider: LLMProvider
+    provider: dataclasses.InitVar[Union[LLMProvider, Type[LLMProvider]]]
+    _conf: Dict[str, Any] = dataclasses.field(
+        default_factory=dict, repr=False, compare=False, hash=False
+    )
+    _provider_cls: Type[LLMProvider] = dataclasses.field(
+        init=False, repr=False, compare=False, hash=False
+    )
+
+    def __post_init__(self, provider):
+        if isinstance(provider, LLMProvider):
+            object.__setattr__(self, "_provider_cls", type(provider))
+            # bypass cached_property
+            object.__setattr__(self, "provider", provider)
+        elif isinstance(provider, type) and issubclass(provider, LLMProvider):
+            object.__setattr__(self, "_provider_cls", provider)
+        else:
+            raise TypeError(
+                "provider must be an LLMProvider instance or subclass"
+            )
+
+    @cached_property
+    def provider(self) -> LLMProvider:
+        return self._provider_cls.from_config(self._conf)
 
 
 class ConfigManager:
@@ -75,6 +98,8 @@ class ConfigManager:
         self.accounts = self._configure_accounts(
             self.conf["accounts"], providers
         )
+        # Validate the default account immediately; others stay lazy-loaded
+        _ = self.default_account.provider
 
     @staticmethod
     def _discover_external_providers(
@@ -138,17 +163,21 @@ class ConfigManager:
         for name, conf in account_config.items():
             if "provider" not in conf:
                 raise ConfigError(f"Account {name} has no provider specified")
-            provider = providers.get(conf["provider"])
-            if not provider:
+            provider_cls = providers.get(conf["provider"])
+            if not provider_cls:
                 raise ConfigError(
                     f"Provider {conf['provider']} is not available. Perhaps"
                     " you need to install it?"
                 )
-            res[name] = Account(name=name, provider=provider.from_config(conf))
+            res[name] = Account(
+                name=name,
+                provider=provider_cls,
+                _conf=conf.copy(),
+            )
         return res
 
     @property
-    def default_account(self) -> LLMProvider:
+    def default_account(self) -> Account:
         try:
             return self.accounts.get(
                 "default",
