@@ -9,6 +9,7 @@ file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 import argparse
 import cmd
+import concurrent.futures
 import dataclasses
 import json
 import os
@@ -76,6 +77,9 @@ class Gptcmd(cmd.Cmd):
         self._threads = {}
         self._session_cost_in_cents = 0
         self._session_cost_incomplete = False
+        self._future_executor = concurrent.futures.ThreadPoolExecutor(
+            max_workers=1
+        )
         super().__init__(*args, **kwargs)
 
     @property
@@ -182,6 +186,22 @@ class Gptcmd(cmd.Cmd):
         lexer.escape = ""
         lexer.whitespace_split = True
         return list(lexer)
+
+    @staticmethod
+    def _await_future_interruptible(
+        future: concurrent.futures.Future, interval: float = 0.25
+    ):
+        """
+        Block until the future finishes, waking up
+        at the supplied interval so the main thread can raise
+        interrupts immediately.
+        Returns future.result().
+        """
+        while True:
+            try:
+                return future.result(timeout=interval)
+            except concurrent.futures.TimeoutError:
+                continue
 
     KNOWN_ROLES = tuple(MessageRole)
 
@@ -374,13 +394,24 @@ class Gptcmd(cmd.Cmd):
         This command takes no arguments.
         """
         print("...")
+        # Run the potentially long-running provider call in a background
+        # thread so Ctrl+c can interrupt immediately.
+        future = self._future_executor.submit(
+            self._account.provider.complete, self._current_thread
+        )
+
         try:
-            res = self._account.provider.complete(self._current_thread)
+            res = self.__class__._await_future_interruptible(future)
         except KeyboardInterrupt:
+            future.cancel()
+            print("\nCancelled")
+            # This API request may have incurred cost
+            self._session_cost_incomplete = True
             return
         except (CompletionError, NotImplementedError, ValueError) as e:
             print(str(e))
             return
+
         try:
             for chunk in res:
                 print(chunk, end="")
@@ -1246,6 +1277,8 @@ class Gptcmd(cmd.Cmd):
             )
         else:
             can_exit = True
+        if can_exit:
+            self._future_executor.shutdown(wait=False)
         return can_exit  # Truthy return values cause the cmdloop to stop
 
 
