@@ -101,14 +101,18 @@ class Gptcmd(cmd.Cmd):
         """
         PLACEHOLDER = "..."
         MAX_LENGTH = 79
-        width = MAX_LENGTH - len(tpl.format(msg=""))
-        content = msg.content
-        res = shorten(content, width=width, placeholder=PLACEHOLDER)
-        if res == PLACEHOLDER:
-            # This isn't a very useful representation.
-            # Go over slightly, even if the result is a bit more awkward.
-            res = content[:width] + "..."
-        return tpl.format(msg=repr(res))
+        MIN_LENGTH = 5
+        # length of the template once the fragment is stripped out
+        head_length = len(tpl.replace("{msg}", ""))
+        # 2 extra chars because repr() will add surrounding quotes
+        avail = max(MIN_LENGTH, MAX_LENGTH - head_length - 2)
+
+        short = shorten(msg.content, avail, placeholder=PLACEHOLDER)
+
+        if short == PLACEHOLDER:
+            short = msg.content[:avail] + PLACEHOLDER
+
+        return tpl.format(msg=repr(short))
 
     @staticmethod
     def _user_range_to_python_range(
