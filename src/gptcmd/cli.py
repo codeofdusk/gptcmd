@@ -849,6 +849,10 @@ class Gptcmd(cmd.Cmd):
             if match and match != arg:
                 self.do_model(match, _print_on_success=_print_on_success)
 
+    def complete_model(self, text, line, begidx, endidx):
+        valid_models = self._account.provider.valid_models or ()
+        return [m for m in valid_models if m.startswith(text)]
+
     def do_set(self, arg):
         """
         Set an API parameter. Pass no arguments to see currently set
