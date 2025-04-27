@@ -14,12 +14,8 @@ import platform
 import shlex
 import shutil
 from importlib import resources
+from importlib.metadata import entry_points
 from typing import Dict, List, Optional, Type
-
-if sys.version_info >= (3, 8):
-    from importlib.metadata import entry_points
-else:
-    from importlib_metadata import entry_points
 
 if sys.version_info >= (3, 11):
     import tomllib
