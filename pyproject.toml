@@ -10,9 +10,9 @@ authors = [
 description = "Command line GPT conversation and experimentation environment"
 readme = "README.md"
 requires-python = ">=3.8.6"
+license = "MPL-2.0"
 classifiers = [
     "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)",
     "Operating System :: OS Independent",
 ]
 dependencies = [
