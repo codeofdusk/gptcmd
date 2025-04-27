@@ -532,6 +532,78 @@ The `unsticky` command makes all sticky messages in the specified range no longe
 'You are a Python programmer. Therefore, when responding, you write...' deleted
 ```
 
+### Message metadata
+Gptcmd allows arbitrary [key–value metadata](https://en.wikipedia.org/wiki/Name%E2%80%93value_pair) to be stored with each message. This might be useful, for instance, to store personal notes with messages, or as an interface to enable special features in external large language model providers (consult external package documentation for details).
+
+Providing a key `k` and value `v` to the `meta` command stores `v` at `k` on the last message:
+
+```
+(gpt-4o) user This is a test.
+'This is a test.' added as user
+(gpt-4o) meta notes "This is a test of message metadata."
+notes set to 'This is a test of message metadata.' on 'This is a test.
+```
+
+Valid JSON literals are supported in metadata values:
+
+```
+(gpt-4o) meta list [1,2,3]
+list set to [1, 2, 3] on 'This is a test.'
+(gpt-4o) meta obj {"key1": "value1", "key2": true}
+obj set to {'key1': 'value1', 'key2': True} on 'This is a test.'
+```
+
+Providing just a key shows the associated value:
+
+```
+(gpt-4o) meta list
+[1, 2, 3]
+(gpt-4o) meta list2
+'list2 not set'
+```
+
+With no arguments, `meta` shows all keys set on the last message:
+
+```
+(gpt-4o) meta
+notes: 'This is a test of message metadata.'
+list: [1, 2, 3]
+obj: {'key1': 'value1', 'key2': True}
+```
+
+Providing an index as the first argument to `meta` operates on the selected message:
+
+```
+(gpt-4o) user Second message
+'Second message' added as user
+(gpt-4o) meta 1 list
+[1, 2, 3]
+(gpt-4o) meta 1 list2 [4,5,6]
+list2 set to [4, 5, 6] on 'This is a test.'
+```
+
+The `unmeta` command deletes a key–value pair. Similarly to `meta`, it accepts an index as its first argument, operating on the last message if no index is provided:
+
+```
+(gpt-4o) unmeta 1 list2
+list2 unset on 'This is a test.'
+(gpt-4o) meta 1 list2
+'list2 not set'
+```
+
+With no key specified, `unmeta` deletes all keys:
+
+```
+(gpt-4o) unmeta 1
+delete 3 items on 'This is a test.'? (y/n)y
+Unset all metadata on 'This is a test.'
+(gpt-4o) meta 1
+No metadata set on 'This is a test.'
+(gpt-4o) clear
+Delete 2 messages? (y/n)y
+Cleared
+```
+
 ### Message threads
 Until this point, we have been engaging in a single conversation (or series of conversations) with the model. However, Gptcmd supports the creation and maintenance of several concurrent conversation "threads".
 

@@ -48,6 +48,7 @@ Field | Type | Description
 `role` | `gptcmd.message.MessageRole` | The conversational role of this message, such as `gptcmd.message.MessageRole.USER`.
 `name` | `Optional[str]` | The user-provided name for this message.
 `attachments` | `List[gptcmd.message.MessageAttachment]` | A list of rich attachments, such as images, associated with this message.
+`metadata` | `Dict[str, Any]` | A dictionary of arbitrary metadata associated with this message, which can be used to get or set data particular to a specific provider (such as reasoning text, a digital signature, user requests for special handling, etc.). Since `metadata` is a field on `Message`, it can be accessed by any provider: it may be wise to, say, prefix metadata keys with the `LLMProvider`'s entry point name and an underscore for namespacing. Metadata values must be JSON serializable.
 
 #### `gptcmd.llm.LLMResponse`
 

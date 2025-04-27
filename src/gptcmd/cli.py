@@ -234,6 +234,21 @@ class Gptcmd(cmd.Cmd):
             if 1 <= choice <= len(options):
                 return options[choice - 1]
 
+    @staticmethod
+    def _json_eval(s: str) -> Any:
+        """
+        Evaluate a Python literal from a string, restricted to values
+        encodable as JSON
+        """
+        PYTHON_TYPES = {
+            "True": True,
+            "False": False,
+            "None": None,
+        }
+        if s in PYTHON_TYPES:
+            return PYTHON_TYPES[s]
+        return json.loads(s)
+
     KNOWN_ROLES = tuple(MessageRole)
 
     @classmethod
@@ -1429,6 +1444,139 @@ class Gptcmd(cmd.Cmd):
 
         if not found:
             print("No hits!")
+
+    def _parse_meta_args(
+        self, arg: str
+    ) -> Tuple["Message", Optional[str], Optional[str]]:
+        arg = arg.strip()
+        if not arg:
+            # bare `meta` / `unmeta` operate on last message
+            return (self._current_thread[-1], None, None)
+
+        tokens = arg.split()
+
+        idx_token = None
+        if tokens and (tokens[0] == "." or tokens[0].lstrip("-").isdigit()):
+            idx_token = tokens.pop(0)
+
+        if idx_token is None:
+            idx = -1
+        else:
+            start, _ = self.__class__._user_range_to_python_range(
+                idx_token, allow_single=True
+            )
+            idx = -1 if start is None else start
+
+        # will raise IndexError if message is absent, handled by caller
+        target_msg = self._current_thread[idx]
+
+        if not tokens:
+            return (target_msg, None, None)
+
+        key = tokens.pop(0)
+        val = " ".join(tokens) if tokens else None
+        return (target_msg, key, val)
+
+    def do_meta(self, arg):
+        """
+        Get or set metadata on a message.
+        """
+        USAGE = "Usage: meta [message] <key> [value]"
+        try:
+            msg, key, val = self._parse_meta_args(arg)
+        except ValueError:
+            print(USAGE)
+            return
+        except IndexError:
+            print("message doesn't exist")
+            return
+
+        if key is None:
+            if msg.metadata:
+                for k, v in msg.metadata.items():
+                    print(f"{k}: {v!r}")
+            else:
+                print(
+                    self.__class__._fragment("No metadata set on {msg}", msg)
+                )
+            return
+
+        if val is None:
+            print(repr(msg.metadata.get(key, f"{key} not set")))
+            return
+
+        try:
+            validated_val = self.__class__._json_eval(val)
+        except (json.JSONDecodeError, UnicodeDecodeError):
+            print("Invalid syntax")
+            return
+        msg.metadata[key] = validated_val
+        self._current_thread.dirty = True
+
+        printable_val = (
+            repr(validated_val).replace("{", "{{").replace("}", "}}")
+        )
+        print(
+            self.__class__._fragment(
+                f"{key} set to {printable_val} on {{msg}}", msg
+            )
+        )
+
+    def complete_meta(self, text, line, begidx, endidx):
+        if text.lstrip("-").isdigit():
+            return []
+        try:
+            msg = self._current_thread[-1]
+            return self.__class__._complete_from_key(msg.metadata, text)
+        except IndexError:
+            return []
+
+    def do_unmeta(self, arg):
+        """
+        Delete a metadata key from a message.
+        """
+        USAGE = "Usage: unmeta [message] <key>"
+        try:
+            msg, key, val = self._parse_meta_args(arg)
+        except ValueError:
+            print(USAGE)
+            return
+        except IndexError:
+            print("message doesn't exist")
+            return
+        if val is not None:  # malformed syntax
+            print(USAGE)
+            return
+        if key is None:
+            if not msg.metadata:
+                print(
+                    self.__class__._fragment("No metadata set on {msg}", msg)
+                )
+                return
+            n = len(msg.metadata)
+            items = "item" if n == 1 else "items"
+            prompt = self.__class__._fragment(
+                f"delete {n} {items} on {{msg}}?", msg
+            )
+            if not self.__class__._confirm(prompt):
+                return
+            msg.metadata.clear()
+            self._current_thread.dirty = True
+            print(self.__class__._fragment("Unset all metadata on {msg}", msg))
+            return
+        if key in msg.metadata:
+            msg.metadata.pop(key)
+            self._current_thread.dirty = True
+            print(self.__class__._fragment(f"{key} unset on {{msg}}", msg))
+        else:
+            print(self.__class__._fragment(f"{key} not set on {{msg}}", msg))
+
+    def complete_unmeta(self, text, line, begidx, endidx):
+        try:
+            msg = self._current_thread[-1]
+            return self.__class__._complete_from_key(msg.metadata, text)
+        except IndexError:
+            return []
 
     def do_quit(self, arg):
         "Exit the program."

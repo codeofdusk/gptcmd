@@ -214,6 +214,8 @@ class Message:
     attachments: List[MessageAttachment] = dataclasses.field(
         default_factory=list
     )
+    #: Arbitrary metadata for this message
+    metadata: Dict[str, Any] = dataclasses.field(default_factory=dict)
 
     @classmethod
     def from_dict(cls, d: Dict[str, Any]):
