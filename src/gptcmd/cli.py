@@ -8,9 +8,11 @@ file, You can obtain one at https://mozilla.org/MPL/2.0/.
 """
 
 import argparse
+import atexit
 import cmd
 import concurrent.futures
 import dataclasses
+import datetime
 import json
 import os
 import re
@@ -18,9 +20,11 @@ import shlex
 import subprocess
 import sys
 import tempfile
+import traceback
 from ast import literal_eval
 from textwrap import shorten
 from typing import (
+    Any,
     Callable,
     Dict,
     List,
@@ -958,7 +962,12 @@ class Gptcmd(cmd.Cmd):
         mp = "message" if len(t) == 1 else "messages"
         print(f"{len(t)} {mp} unstickied")
 
-    def do_save(self, arg):
+    def do_save(
+        self,
+        arg: str,
+        _extra_metadata: Optional[Dict[str, Any]] = None,
+        _print_on_success: bool = True,
+    ):
         """
         Save all named threads to the specified json file. With no argument,
         save to the most recently loaded/saved JSON file in this session.
@@ -984,7 +993,11 @@ class Gptcmd(cmd.Cmd):
         else:
             path = args[0]
         res = {}
-        res["_meta"] = {"version": __version__}
+        if _extra_metadata is None:
+            res["_meta"] = {}
+        else:
+            res["_meta"] = _extra_metadata.copy()
+        res["_meta"]["version"] = __version__
         res["threads"] = {k: v.to_dict() for k, v in self._threads.items()}
         try:
             with open(path, "w", encoding="utf-8") as cam:
@@ -994,7 +1007,8 @@ class Gptcmd(cmd.Cmd):
             return
         for thread in self._threads.values():
             thread.dirty = False
-        print(f"{os.path.abspath(path)} saved")
+        if _print_on_success:
+            print(f"{os.path.abspath(path)} saved")
         self.last_path = path
 
     def do_load(self, arg, _print_on_success=True):
@@ -1282,6 +1296,48 @@ class Gptcmd(cmd.Cmd):
         return can_exit  # Truthy return values cause the cmdloop to stop
 
 
+def _write_crash_dump(shell: Gptcmd, exc: Exception) -> Optional[str]:
+    """
+    Serialize the current shell into a JSON file and return its absolute
+    path.
+    """
+    detached_added = False
+    try:
+        ts = (
+            datetime.datetime.now()
+            .isoformat(timespec="seconds")
+            .replace(":", "-")
+        )
+        filename = f"gptcmd-{ts}.json"
+        tb_text = "".join(
+            traceback.format_exception(type(exc), exc, exc.__traceback__)
+        )
+        if shell._detached:
+            original_dirty = shell._detached.dirty
+            detached_base = "__detached__"
+            detached_key = detached_base
+            i = 1
+            while detached_key in shell._threads:
+                i += 1
+                detached_key = f"{detached_base}{i}"
+            shell._detached.dirty = False
+            shell._threads[detached_key] = shell._detached
+            detached_added = True
+        shell.do_save(
+            filename,
+            _extra_metadata={"crash_traceback": tb_text},
+            _print_on_success=False,
+        )
+        return os.path.abspath(filename)
+    except Exception as e:
+        print(f"Failed to write crash dump: {e}", file=sys.stderr)
+        return None
+    finally:
+        if detached_added:
+            shell._detached.dirty = original_dirty
+            shell._threads.pop(detached_key, None)
+
+
 def main() -> bool:
     """
     Setuptools requires a callable entry point to build an installable script
@@ -1336,7 +1392,25 @@ def main() -> bool:
         shell.do_account(args.account, _print_on_success=False)
     if args.model:
         shell.do_model(args.model, _print_on_success=False)
-    shell.cmdloop()
+    try:
+        shell.cmdloop()
+    except Exception as e:
+        # Does any thread contain messages?
+        should_save = (shell._detached and shell._detached.dirty) or any(
+            t and t.dirty for t in shell._threads.values()
+        )
+        if should_save:
+            dump_path = _write_crash_dump(shell, e)
+            if dump_path:
+                # Hack: Print the "crash dump" notice after the traceback
+                atexit.register(
+                    lambda p=dump_path: print(
+                        f"Crash dump written to {p}",
+                        file=sys.stderr,
+                        flush=True,
+                    )
+                )
+        raise
     return True
 
 
