@@ -7,6 +7,7 @@ file, You can obtain one at https://mozilla.org/MPL/2.0/.
 """
 
 import inspect
+import mimetypes
 import re
 
 from collections import namedtuple
@@ -20,7 +21,7 @@ from . import (
     LLMProvider,
     LLMResponse,
 )
-from ..message import Image, Message, MessageRole
+from ..message import Audio, Image, Message, MessageRole
 
 import openai
 
@@ -358,6 +359,18 @@ def format_image_for_openai(img: Image) -> Dict[str, Any]:
     res = {"type": "image_url", "image_url": {"url": img.url}}
     if img.detail is not None:
         res["image_url"]["detail"] = img.detail
+    return res
+
+
+@OpenAI.register_attachment_formatter(Audio)
+def format_audio_for_openai(a: Audio) -> Dict[str, Any]:
+    res: Dict[str, Any] = {
+        "type": "input_audio",
+        "input_audio": {"data": a.b64},
+    }
+    ext = mimetypes.guess_extension(a.mimetype)
+    if ext:
+        res["input_audio"]["format"] = ext.lstrip(".")
     return res
 
 

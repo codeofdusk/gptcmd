@@ -200,7 +200,7 @@ The first ten digits of pi are 3.141592653.
 
 With no arguments, the `user`, `assistant`, `system`, and `say` commands open an external text editor (based on your system or Gptcmd configuration) for message composition.
 
-### Working with images
+### Working with attachments
 OpenAI's latest models, such as `gppt-4o`, support images alongside text content. Images can be attached to messages with the `image` command, which accepts two arguments: the location of the image, either a URL or path to a local file; and the index of the message to which the image should be attached (if unspecified, it defaults to the last). We'll ask GPT to describe an image by creating a user message and attaching an image from Wikimedia Commons:
 
 ```
@@ -224,6 +224,8 @@ Now, we can `send` our message to get a description:
 ...
 This is a white cane, often used by individuals who are blind or visually impaired to aid in mobility and navigation. It has a handle, a long shaft, and a rounded tip.
 ```
+
+Similarly, the `audio` command can be used to attach audio files to messages. Its syntax and operation is identical to the `image` command.
 
 ### Managing messages
 The `pop` command with no argument deletes the last message of a conversation:

@@ -8,8 +8,10 @@ file, You can obtain one at https://mozilla.org/MPL/2.0/.
 """
 
 import base64
+import binascii
 import dataclasses
 import mimetypes
+import re
 import sys
 import urllib.parse
 import urllib.request
@@ -150,25 +152,44 @@ class FileAttachment(MessageAttachment):
         self._b64: Optional[str] = None
         self._mimetype: Optional[str] = None
 
-        if url and url.startswith("data:"):
-            header, b64 = url.split(",", 1)
-            self.url = url
-            self._b64 = b64
-            self._mimetype = header[5:].split(";")[0]
-            return
-
         if url:
-            self.url = url
-            self._mimetype = mimetype
-            return
-
-        if b64 and mimetype:
+            if url.startswith("data:"):
+                # data:[<mediatype>][;<param=value>][;base64],<data>
+                match = re.fullmatch(r"data:([^,]*?),(.*)", url, re.I)
+                if not match:
+                    raise ValueError(f"Invalid data URL format: {url}")
+                header, raw_data = match.groups()
+                parts = header.split(";")
+                self._mimetype = parts[0] or "application/octet-stream"
+                is_b64 = any(p.lower() == "base64" for p in parts[1:])
+                if is_b64:
+                    self._b64 = raw_data
+                else:
+                    # URL-encoded data, decode first
+                    decoded_bytes = urllib.parse.unquote_to_bytes(raw_data)
+                    self._b64 = base64.b64encode(decoded_bytes).decode()
+                self.url = url
+            elif re.match(r"^[a-z][a-z0-9+\-.]*://", url, re.I):  # any scheme
+                self.url = url
+                self._mimetype = mimetype
+            else:
+                raise ValueError(
+                    "URL must be a data: URL or start with a scheme like"
+                    f" http://), got: {url}"
+                )
+        elif b64 and mimetype:
             self._b64 = b64
             self._mimetype = mimetype
             self.url = f"data:{mimetype};base64,{b64}"
-            return
+        else:
+            raise ValueError("Provide either url or both b64 and mimetype")
 
-        raise ValueError("Provide either url or both b64 and mimetype")
+        # Validate base64 data if provided
+        if self._b64:
+            try:
+                base64.b64decode(self._b64, validate=True)
+            except binascii.Error as exc:
+                raise ValueError("Invalid base64 data") from exc
 
     @classmethod
     def from_path(cls, path: str, **kwargs):
@@ -252,6 +273,13 @@ class Image(FileAttachment):
     @classmethod
     def _deserialize(cls, d: Dict[str, Any]) -> "Image":
         return cls(url=d["url"], detail=d.get("detail"))
+
+
+@attachment_type_registrar.register("audio_url")
+class Audio(FileAttachment):
+    "An audio file."
+
+    pass
 
 
 class UnknownAttachment(MessageAttachment):

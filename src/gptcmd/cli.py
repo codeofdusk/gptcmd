@@ -39,6 +39,7 @@ from .config import ConfigError, ConfigManager
 from .llm import CompletionError, InvalidAPIParameterError, LLMProviderFeature
 from .macros import MacroError, MacroRunner
 from .message import (
+    Audio,
     Image,
     Message,
     MessageAttachment,
@@ -314,9 +315,7 @@ class Gptcmd(cmd.Cmd):
                 (
                     0
                     if c.lower().startswith(in_lower)
-                    else 1
-                    if in_lower in c.lower()
-                    else 2
+                    else 1 if in_lower in c.lower() else 2
                 ),
                 # Suffix match (prefer non-digit)
                 # Heuristic: Prefer unversioned model aliases
@@ -1359,7 +1358,7 @@ class Gptcmd(cmd.Cmd):
                 success_callback(msg)
             print(
                 self.__class__._fragment(
-                    attachment_type.__name__ + " added to {msg}", msg
+                    f"{attachment_type.__name__} added to {{msg}}", msg
                 )
             )
         except IndexError:
@@ -1370,6 +1369,29 @@ class Gptcmd(cmd.Cmd):
         "Attach an image at the specified location"
         return self._attachment_url_helper(
             cmd_name="image", attachment_type=Image, arg=arg
+        )
+
+    def do_audio(self, arg):
+        "Attach an audio file at the specified location"
+
+        def _success(msg):
+            if (
+                self._account.provider.model
+                and "audio" not in self._account.provider.model
+                and "gpt-4o-audio-preview"
+                in (self._account.provider.valid_models or ())
+            ):
+                print(
+                    "Warning! The selected model may not support audio. "
+                    "If sending this conversation fails, try switching to a "
+                    "audio-capable model with:\nmodel gpt-4o-audio-preview"
+                )
+
+        return self._attachment_url_helper(
+            cmd_name="audio",
+            attachment_type=Audio,
+            arg=arg,
+            success_callback=_success,
         )
 
     def do_account(self, arg, _print_on_success: bool = True):
