@@ -66,6 +66,7 @@ Field | Type | Description
 
 #### Exceptions
 
+* **`gptcmd.config.ConfigError`**: Raised by the `from_config` method when the provider cannot be configured.
 * **`gptcmd.llm.CompletionError`**: Raised by the `complete` method when the LLM cannot generate a response.
 * **`gptcmd.llm.InvalidAPIParameterError`**: Raised by the `validate_api_params` method when invalid API parameters are provided.
 
@@ -193,6 +194,8 @@ Then, replace the `from_config` method with:
     def from_config(cls, conf: Dict[str, Any]) -> "EchoProvider":
         return cls(backwards=conf.get("backwards"))
 ```
+
+In this example, `from_config` always succeeds. If `from_config` might throw an error (for instance, due to invalid user input, failed network requests, etc.), the method should raise `ConfigError` (in the `gptcmd.config` module).
 
 Now, modify `complete`:
 
