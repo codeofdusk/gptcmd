@@ -95,8 +95,8 @@ class OpenAI(LLMProvider):
     ) -> Optional[Decimal]:
         COST_PER_PROMPT_SAMPLED: Dict[str, ModelCostInfo] = {
             "o3-2025-04-16": ModelCostInfo(
-                Decimal("10") / Decimal("1000000"),
-                Decimal("40") / Decimal("1000000"),
+                Decimal("2") / Decimal("1000000"),
+                Decimal("8") / Decimal("1000000"),
                 Decimal("0.25"),
             ),
             "o1-2024-12-17": ModelCostInfo(
