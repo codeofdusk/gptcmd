@@ -1701,7 +1701,10 @@ def main() -> bool:
         shell.do_model(args.model, _print_on_success=False)
     try:
         shell.cmdloop()
-    except Exception as e:
+    except SystemExit:
+        # Don't write a crash dump
+        raise
+    except BaseException as e:
         # Does any thread contain messages?
         should_save = (shell._detached and shell._detached.dirty) or any(
             t and t.dirty for t in shell._threads.values()
