@@ -135,6 +135,16 @@ class OpenAI(LLMProvider):
                 Decimal("150") / Decimal("1000000"),
                 Decimal("0.5"),
             ),
+            "gpt-4o-audio-preview-2025-06-03": ModelCostInfo(
+                Decimal("2.5") / Decimal("1000000"),
+                Decimal("10") / Decimal("1000000"),
+                Decimal("0.5"),
+            ),
+            "gpt-4o-audio-preview-2024-12-17": ModelCostInfo(
+                Decimal("2.5") / Decimal("1000000"),
+                Decimal("10") / Decimal("1000000"),
+                Decimal("0.5"),
+            ),
             "gpt-4o-2024-11-20": ModelCostInfo(
                 Decimal("2.5") / Decimal("1000000"),
                 Decimal("10") / Decimal("1000000"),
