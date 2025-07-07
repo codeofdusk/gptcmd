@@ -193,8 +193,9 @@ class Gptcmd(cmd.Cmd):
         return [k for k, v in d.items() if k.startswith(text)]
 
     @staticmethod
-    def _shlex_path(path: str) -> List[str]:
-        lexer = shlex.shlex(path, posix=True)
+    def _lex_args(line: str) -> List[str]:
+        "Lex a string into a list of shell-like arguments"
+        lexer = shlex.shlex(line, posix=True)
         lexer.escape = ""
         lexer.whitespace_split = True
         return list(lexer)
@@ -365,7 +366,7 @@ class Gptcmd(cmd.Cmd):
             ) and name.endswith(self.config.SYSTEM_MACRO_SUFFIX)
             if not is_system_macro:
                 try:
-                    args = shlex.split(arg, posix=True)
+                    args = self.__class__._lex_args(arg)
                 except ValueError as e:
                     print(f"Error parsing macro arguments: {e}")
                     return False
@@ -1142,7 +1143,7 @@ class Gptcmd(cmd.Cmd):
         Save all named threads to the specified json file. With no argument,
         save to the most recently loaded/saved JSON file in this session.
         """
-        args = self.__class__._shlex_path(arg)
+        args = self.__class__._lex_args(arg)
         if len(args) > 1:
             print("Usage: save [path]")
             return
@@ -1187,7 +1188,7 @@ class Gptcmd(cmd.Cmd):
             print("Usage: load <path>\n")
             return
         try:
-            args = self.__class__._shlex_path(arg)
+            args = self.__class__._lex_args(arg)
         except ValueError as e:
             print(e)
             return
@@ -1240,7 +1241,7 @@ class Gptcmd(cmd.Cmd):
         example: "read /path/to/prompt.txt system"
         """
         try:
-            args = self.__class__._shlex_path(arg)
+            args = self.__class__._lex_args(arg)
         except ValueError as e:
             print(e)
             return
@@ -1267,7 +1268,7 @@ class Gptcmd(cmd.Cmd):
     def do_write(self, arg):
         "Write the contents of the last message to the specified file."
         try:
-            args = self.__class__._shlex_path(arg)
+            args = self.__class__._lex_args(arg)
         except ValueError as e:
             print(e)
             return
@@ -1298,7 +1299,7 @@ class Gptcmd(cmd.Cmd):
         specified file.
         """
         try:
-            args = self.__class__._shlex_path(arg)
+            args = self.__class__._lex_args(arg)
         except ValueError as e:
             print(e)
             return
@@ -1346,7 +1347,7 @@ class Gptcmd(cmd.Cmd):
                 a = attachment_type(url=location)
             else:
                 a = attachment_type.from_path(
-                    self.__class__._shlex_path(location)[0]
+                    self.__class__._lex_args(location)[0]
                 )
         except (OSError, ValueError) as e:
             print(e)
