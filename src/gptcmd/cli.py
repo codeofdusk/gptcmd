@@ -1384,7 +1384,7 @@ class Gptcmd(cmd.Cmd):
             ):
                 print(
                     "Warning! The selected model may not support audio. "
-                    "If sending this conversation fails, try switching to a "
+                    "If sending this conversation fails, try switching to an "
                     "audio-capable model with:\nmodel gpt-4o-audio-preview"
                 )
 
