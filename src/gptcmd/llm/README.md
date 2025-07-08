@@ -392,6 +392,8 @@ hello!
 img=http://example.com/image.jpg
 ```
 
+`Image`, `Audio`, and other similar "file-like" attachment types expose `b64` and `mimetype` as strings, which may be helpful for some APIs.
+
 #### Streamed responses
 
 If your `LLMProvider` implementation can stream parts of a response as they are generated, you'll need to advertise this support. Add a class variable called `SUPPORTED_FEATURES` containing the appropriate member of the `gptcmd.llm.LLMProviderFeature` [flag enumeration](https://docs.python.org/3/library/enum.html#enum.Flag). Import `LLMProviderFeature` from `gptcmd.llm` in your provider's module, then add this inside the class:
