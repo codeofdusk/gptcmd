@@ -95,6 +95,11 @@ class OpenAI(LLMProvider):
         sampled_tokens: int,
     ) -> Optional[Decimal]:
         COST_PER_PROMPT_SAMPLED: Dict[str, ModelCostInfo] = {
+            "gpt-5-2025-08-07": ModelCostInfo(
+                Decimal("1.25") / Decimal("1000000"),
+                Decimal("10") / Decimal("1000000"),
+                Decimal("0.1"),
+            ),
             "o3-2025-04-16": ModelCostInfo(
                 Decimal("2") / Decimal("1000000"),
                 Decimal("8") / Decimal("1000000"),
@@ -109,6 +114,16 @@ class OpenAI(LLMProvider):
                 Decimal("15") / Decimal("1000000"),
                 Decimal("60") / Decimal("1000000"),
                 Decimal("0.5"),
+            ),
+            "gpt-5-mini-2025-08-07": ModelCostInfo(
+                Decimal("0.25") / Decimal("1000000"),
+                Decimal("2") / Decimal("1000000"),
+                Decimal("0.1"),
+            ),
+            "gpt-5-nano-2025-08-07": ModelCostInfo(
+                Decimal("0.05") / Decimal("1000000"),
+                Decimal("0.4") / Decimal("1000000"),
+                Decimal("0.1"),
             ),
             "o4-mini-2025-04-16": ModelCostInfo(
                 Decimal("1.1") / Decimal("1000000"),
