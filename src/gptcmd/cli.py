@@ -22,6 +22,7 @@ import subprocess
 import sys
 import tempfile
 import traceback
+import urllib.request
 from ast import literal_eval
 from textwrap import shorten
 from typing import (
@@ -92,6 +93,7 @@ class Gptcmd(cmd.Cmd):
             max_workers=1
         )
         self._macro_runner = MacroRunner(self)
+        self._check_for_updates()
         super().__init__(*args, **kwargs)
 
     @property
@@ -353,6 +355,89 @@ class Gptcmd(cmd.Cmd):
         }
         for overlap in builtin_cmds & self.config.macros.keys():
             raise ConfigError(f"Invalid macro name {overlap!r}")
+
+    def _check_for_updates(self):
+        """
+        Query PyPI for the latest published version, notifying if an update
+        is available.
+        """
+        if not self.config.conf.get("check_for_updates"):
+            return
+
+        def _parse(v: str) -> Tuple[int, int, int, int, int]:
+            s = v.strip().lower()
+            if s.startswith("v"):
+                s = s[1:]
+            # Drop build metadata
+            s = s.split("+", 1)[0]
+
+            pre = ""
+            main = s
+
+            if "-" in s:
+                main, pre = s.split("-", 1)
+
+            m = re.match(r"^(\d+)\.(\d+)\.(\d+)([a-z]+)?(\d*)$", main)
+            if m:
+                major, minor, patch, inline_tag, inline_num = m.groups()
+                if inline_tag:
+                    pre = (inline_tag or "") + (inline_num or "")
+            else:
+                parts = main.split(".")
+                nums = []
+                for p in parts:
+                    m2 = re.match(r"^(\d+)", p)
+                    nums.append(int(m2.group(1)) if m2 else 0)
+                while len(nums) < 3:
+                    nums.append(0)
+                major, minor, patch = nums[:3]
+
+            major = int(major)
+            minor = int(minor)
+            patch = int(patch)
+
+            if not pre:
+                return (major, minor, patch, 1, 0)
+
+            # Pre-release: sort below final
+            mpre = re.match(
+                r"^(?:a|alpha|b|beta|rc|dev|pre|preview)?(\d*)", pre
+            )
+            pre_num = (
+                int(mpre.group(1)) if mpre and mpre.group(1).isdigit() else 0
+            )
+            return (major, minor, patch, 0, pre_num)
+
+        def _fetch_pypi() -> Optional[str]:
+            try:
+                req = urllib.request.Request(
+                    "https://pypi.org/pypi/gptcmd/json",
+                    headers={
+                        "User-Agent": f"gptcmd/{__version__}",
+                        "Accept": "application/json",
+                    },
+                )
+                with urllib.request.urlopen(req, timeout=3.0) as resp:
+                    if getattr(resp, "status", 200) not in (200, 203):
+                        return None
+                    data = json.loads(resp.read().decode("utf-8"))
+                ver = data.get("info", {}).get("version")
+                return str(ver) if ver else None
+            except Exception:
+                return None
+
+        try:
+            mine = __version__
+            theirs = _fetch_pypi()
+            if not theirs:
+                return
+            if _parse(mine) < _parse(theirs):
+                print(
+                    f"Newer Gptcmd version {theirs} is available. "
+                    "Upgrade with: pip install -U gptcmd"
+                )
+        except Exception:
+            return
 
     def emptyline(self):
         "Disable Python cmd's repeat last command behaviour."

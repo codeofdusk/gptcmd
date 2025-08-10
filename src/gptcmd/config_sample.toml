@@ -1,7 +1,7 @@
 # Gptcmd configuration
 
 # This option is used by the application for version tracking.
-schema_version = "1.2.0"
+schema_version = "1.3.0"
 
 # This option controls the formatting of the prompt.
 # The following keywords (when placed in braces) are replaced by:
@@ -27,6 +27,9 @@ show_incomplete_cost = false
 # This option controls whether the number of prompt (input) and sampled
 # (generated) tokens used for each request is displayed when available.
 show_token_usage = true
+
+# This option controls whether Gptcmd checks for updates on startup.
+check_for_updates = true
 
 # This option specifies the external editor Gptcmd uses for commands that require one.
 # If this option is not set, Gptcmd uses Notepad on Windows.
