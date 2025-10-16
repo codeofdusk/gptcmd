@@ -1764,10 +1764,11 @@ def _write_crash_dump(shell: Gptcmd, exc: Exception) -> Optional[str]:
             shell._threads.pop(detached_key, None)
 
 
-def main() -> bool:
-    """
-    Setuptools requires a callable entry point to build an installable script
-    """
+class ExperimentalAPIWarning(Warning):
+    pass
+
+
+def _run(shell_cls) -> bool:
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "path",
@@ -1806,7 +1807,17 @@ def main() -> bool:
             config = ConfigManager.from_toml(args.config)
         else:
             config = None
-        shell = Gptcmd(config=config)
+        if shell_cls is not Gptcmd:
+            import warnings
+
+            warnings.warn(
+                "Passing a custom shell_cls is experimental and may break "
+                "in future releases.",
+                ExperimentalAPIWarning,
+                stacklevel=2,
+            )
+            assert issubclass(shell_cls, Gptcmd)
+        shell = shell_cls(config=config)
     except ConfigError as e:
         print(f"Couldn't read config: {e}")
         return False
@@ -1841,6 +1852,13 @@ def main() -> bool:
                 )
         raise
     return True
+
+
+def main() -> bool:
+    """
+    Setuptools requires a callable entry point to build an installable script
+    """
+    return _run(Gptcmd)
 
 
 if __name__ == "__main__":
