@@ -35,6 +35,11 @@ OPENAI_COSTS: Dict[str, ModelCostInfo] = {
         Decimal("10") / Decimal("1000000"),
         Decimal("0.1"),
     ),
+    "gpt-5-search-api-2025-10-14": ModelCostInfo(
+        Decimal("1.25") / Decimal("1000000"),
+        Decimal("10") / Decimal("1000000"),
+        Decimal("0.1"),
+    ),
     "o3-2025-04-16": ModelCostInfo(
         Decimal("2") / Decimal("1000000"),
         Decimal("8") / Decimal("1000000"),
