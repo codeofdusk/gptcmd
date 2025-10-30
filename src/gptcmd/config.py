@@ -8,21 +8,28 @@ file, You can obtain one at https://mozilla.org/MPL/2.0/.
 """
 
 import dataclasses
+import json
 import os
-import sys
 import platform
 import shlex
 import shutil
+import sys
+import urllib.request
 from functools import cached_property
 from importlib import resources
-from importlib.metadata import entry_points
-from typing import Any, Dict, List, Optional, Set, Type, Union
+from packaging.version import parse as parse_version
+from typing import Any, Dict, List, Optional, Set, Tuple, Type, Union
 
+if sys.version_info < (3, 10):
+    from importlib_metadata import entry_points
+else:
+    from importlib.metadata import entry_points
 if sys.version_info >= (3, 11):
     import tomllib
 else:
     import tomli as tomllib
 
+from . import __version__
 from .llm import LLMProvider
 from .llm.openai import AzureAI, OpenAI
 
@@ -106,8 +113,9 @@ class ConfigManager:
         # Validate the default account immediately; others stay lazy-loaded
         _ = self.default_account.provider
 
-    @staticmethod
+    @classmethod
     def _discover_external_providers(
+        cls,
         initial_providers: Optional[Dict[str, Type[LLMProvider]]] = None,
     ) -> Dict[str, Type[LLMProvider]]:
         """
@@ -116,13 +124,7 @@ class ConfigManager:
         res: Dict[str, Type[LLMProvider]] = {}
         if initial_providers:
             res.update(initial_providers)
-        eps = entry_points()
-        ENTRY_POINT_GROUP = "gptcmd.providers"
-        if hasattr(eps, "select"):
-            selected_eps = eps.select(group=ENTRY_POINT_GROUP)
-        else:
-            selected_eps = eps.get(ENTRY_POINT_GROUP, ())
-        for ep in selected_eps:
+        for ep in cls._iter_provider_entry_points():
             provider_cls = ep.load()
             if ep.name in res:
 
@@ -272,3 +274,96 @@ class ConfigManager:
                     if shutil.which(cmd):
                         return cmd
                 raise ConfigError("No editor available")
+
+    @staticmethod
+    def _iter_provider_entry_points():
+        """
+        Yield provider entry points registered in the entry point group.
+        Silent on any error; returns an empty tuple if discovery fails.
+        """
+        GROUP = "gptcmd.providers"
+        try:
+            eps = entry_points()
+            return eps.select(group=GROUP)
+        except Exception:
+            return ()
+
+    @staticmethod
+    def _is_updatable_distribution(dist) -> bool:
+        """
+        Return True if the distribution appears to be a standard PyPI install,
+        False otherwise or on error.
+        """
+        try:
+            files = dist.files or ()
+            for f in files:
+                if str(f).endswith("direct_url.json"):
+                    p = dist.locate_file(f)
+                    with open(p, "r", encoding="utf-8") as fin:
+                        data = json.load(fin)
+                    if data.get("dir_info", {}).get("editable"):
+                        return False
+                    url = (
+                        data.get("archive_info", {}).get("url")
+                        or data.get("url")
+                        or ""
+                    )
+                    vcs_prefixes = ("git+", "hg+", "svn+", "bzr+")
+                    if any(url.startswith(pref) for pref in vcs_prefixes):
+                        return False
+                    if url.startswith("file://"):
+                        return False
+                    if url and not (
+                        "files.pythonhosted.org" in url or "pypi.org" in url
+                    ):
+                        return False
+                    return True
+            return True
+        except Exception:
+            return False
+
+    @staticmethod
+    def _fetch_pypi_version(dist_name: str) -> Optional[str]:
+        """
+        Fetch the latest version string for a distribution from PyPI.
+        Returns None on failure.
+        """
+        try:
+            req = urllib.request.Request(
+                f"https://pypi.org/pypi/{dist_name}/json",
+                headers={
+                    "User-Agent": f"Gptcmd/{__version__}",
+                    "Accept": "application/json",
+                },
+            )
+            with urllib.request.urlopen(req, timeout=3.0) as resp:
+                if getattr(resp, "status", 200) not in (200, 203):
+                    return None
+                data = json.loads(resp.read().decode("utf-8"))
+            ver = data.get("info", {}).get("version")
+            return str(ver) if ver else None
+        except Exception:
+            return None
+
+    def get_updatable_provider_packages(self) -> List[Tuple[str, str, str]]:
+        """
+        Return a list of (name, current_version, latest_version) tuples for
+        provider packages with newer versions available on PyPI.
+        """
+        res: List[Tuple[str, str, str]] = []
+        seen: Set[str] = set()
+        for ep in self._iter_provider_entry_points():
+            dist = getattr(ep, "dist", None)
+            if dist is None:
+                continue
+            name = dist.metadata.get("Name", dist.name)
+            if not name or name == "gptcmd" or name in seen:
+                continue
+            seen.add(name)
+            if not self._is_updatable_distribution(dist):
+                continue
+            mine = dist.version
+            theirs = self._fetch_pypi_version(name)
+            if theirs and parse_version(mine) < parse_version(theirs):
+                res.append((name, mine, theirs))
+        return res
