@@ -8,6 +8,6 @@ file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 __all__ = ["__version__", "Gptcmd"]
 
-__version__ = "2.3.0"
+__version__ = "2.3.1"
 
 from .cli import Gptcmd  # noqa: E402
