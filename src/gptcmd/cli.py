@@ -21,8 +21,10 @@ import shlex
 import subprocess
 import sys
 import tempfile
+import threading
 import traceback
 import urllib.request
+import weakref
 from ast import literal_eval
 from packaging.version import parse as parse_version
 from textwrap import shorten
@@ -36,6 +38,8 @@ from typing import (
     Tuple,
     Type,
 )
+
+from concurrent.futures.thread import _worker
 
 from . import __version__
 from .config import ConfigError, ConfigManager
@@ -65,6 +69,41 @@ def input_with_handling(_input: Callable) -> Callable:
     return _inner
 
 
+class DaemonThreadPoolExecutor(concurrent.futures.ThreadPoolExecutor):
+    """
+    Thread pool that uses daemon threads so interrupted requests cannot
+    block exit.
+    """
+
+    def _adjust_thread_count(self) -> None:
+        # if idle threads are available, don't spin new threads
+        if self._idle_semaphore.acquire(timeout=0):
+            return
+
+        # When the executor gets lost, the weakref callback will wake up
+        # the worker threads.
+        def weakref_cb(_, q=self._work_queue):
+            q.put(None)
+
+        num_threads = len(self._threads)
+        if num_threads < self._max_workers:
+            thread_name = f"{self._thread_name_prefix or self}_{num_threads}"
+            t = threading.Thread(
+                name=thread_name,
+                target=_worker,
+                args=(
+                    weakref.ref(self, weakref_cb),
+                    self._work_queue,
+                    self._initializer,
+                    self._initargs,
+                ),
+            )
+            t.daemon = True
+            t.start()
+            # Avoid atexit joins when a request is stuck.
+            self._threads.add(t)
+
+
 class Gptcmd(cmd.Cmd):
     "Represents the Gptcmd command line application"
 
@@ -89,9 +128,7 @@ class Gptcmd(cmd.Cmd):
         self._threads = {}
         self._session_cost_in_cents = 0
         self._session_cost_incomplete = False
-        self._future_executor = concurrent.futures.ThreadPoolExecutor(
-            max_workers=1
-        )
+        self._future_executor = DaemonThreadPoolExecutor(max_workers=1)
         self._macro_runner = MacroRunner(self)
         self._check_for_updates()
         super().__init__(*args, **kwargs)
@@ -217,6 +254,10 @@ class Gptcmd(cmd.Cmd):
                 return future.result(timeout=interval)
             except concurrent.futures.TimeoutError:
                 continue
+
+    def _reset_future_executor(self) -> None:
+        self._future_executor.shutdown(wait=False)
+        self._future_executor = DaemonThreadPoolExecutor(max_workers=1)
 
     @staticmethod
     def _menu(prompt: str, options: List[str]) -> Optional[str]:
@@ -607,6 +648,7 @@ class Gptcmd(cmd.Cmd):
             print("\nCancelled")
             # This API request may have incurred cost
             self._session_cost_incomplete = True
+            self._reset_future_executor()
             return
         except (CompletionError, NotImplementedError, ValueError) as e:
             print(str(e))
