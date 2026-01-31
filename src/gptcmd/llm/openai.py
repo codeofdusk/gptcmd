@@ -371,6 +371,9 @@ class OpenAI(LLMProvider):
 
     def get_best_model(self):
         BEST_MODELS = (
+            "gpt-5.2",
+            "gpt-5.1",
+            "gpt-5",
             "gpt-4.1",
             "gpt-4o",
             "gpt-4-turbo",
