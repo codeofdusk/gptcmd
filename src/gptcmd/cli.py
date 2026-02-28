@@ -24,6 +24,7 @@ import tempfile
 import threading
 import traceback
 import urllib.request
+import warnings
 import weakref
 from ast import literal_eval
 from packaging.version import parse as parse_version
@@ -69,6 +70,10 @@ def input_with_handling(_input: Callable) -> Callable:
     return _inner
 
 
+class ExecutorCompatibilityWarning(Warning):
+    pass
+
+
 class DaemonThreadPoolExecutor(concurrent.futures.ThreadPoolExecutor):
     """
     Thread pool that uses daemon threads so interrupted requests cannot
@@ -87,21 +92,44 @@ class DaemonThreadPoolExecutor(concurrent.futures.ThreadPoolExecutor):
 
         num_threads = len(self._threads)
         if num_threads < self._max_workers:
-            thread_name = f"{self._thread_name_prefix or self}_{num_threads}"
-            t = threading.Thread(
-                name=thread_name,
-                target=_worker,
-                args=(
-                    weakref.ref(self, weakref_cb),
-                    self._work_queue,
-                    self._initializer,
-                    self._initargs,
-                ),
-            )
-            t.daemon = True
-            t.start()
-            # Avoid atexit joins when a request is stuck.
-            self._threads.add(t)
+            try:
+                executor_ref = weakref.ref(self, weakref_cb)
+                if hasattr(self, "_create_worker_context"):  # New API
+                    worker_ctx = self._create_worker_context()
+                    worker_args = (
+                        executor_ref,
+                        worker_ctx,
+                        self._work_queue,
+                    )
+                else:  # Old API
+                    worker_args = (
+                        executor_ref,
+                        self._work_queue,
+                        self._initializer,
+                        self._initargs,
+                    )
+                thread_name = (
+                    f"{self._thread_name_prefix or self}_{num_threads}"
+                )
+                t = threading.Thread(
+                    name=thread_name,
+                    target=_worker,
+                    args=worker_args,
+                )
+                t.daemon = True
+                t.start()
+                # Avoid atexit joins when a request is stuck.
+                self._threads.add(t)
+            except (AttributeError, TypeError) as e:
+                warnings.warn(
+                    "Daemon executor compatibility path failed, falling "
+                    "back to standard library behaviour. Please file an issue "
+                    "on the Gptcmd GitHub or report privately: "
+                    f"{type(e).__name__}: {e}",
+                    ExecutorCompatibilityWarning,
+                    stacklevel=2,
+                )
+                super()._adjust_thread_count()
 
 
 class Gptcmd(cmd.Cmd):
@@ -1850,8 +1878,6 @@ def _run(shell_cls) -> bool:
         else:
             config = None
         if shell_cls is not Gptcmd:
-            import warnings
-
             warnings.warn(
                 "Passing a custom shell_cls is experimental and may break "
                 "in future releases.",
