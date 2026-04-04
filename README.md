@@ -431,7 +431,7 @@ Unset all parameters
 ```
 
 ### Names
-GPT allows mesages to be annotated with the name of their author. The `name` command sets the name to be sent with all future messages of the specified role. Its first argument is the role to which this new name should be applied, and its second is the name to use:
+GPT allows messages to be annotated with the name of their author. The `name` command sets the name to be sent with all future messages of the specified role. Its first argument is the role to which this new name should be applied, and its second is the name to use:
 
 ```
 (gpt-4o) name user Michael
