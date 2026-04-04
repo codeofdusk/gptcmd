@@ -201,7 +201,7 @@ The first ten digits of pi are 3.141592653.
 With no arguments, the `user`, `assistant`, `system`, and `say` commands open an external text editor (based on your system or Gptcmd configuration) for message composition.
 
 ### Working with attachments
-OpenAI's latest models, such as `gppt-4o`, support images alongside text content. Images can be attached to messages with the `image` command, which accepts two arguments: the location of the image, either a URL or path to a local file; and the index of the message to which the image should be attached (if unspecified, it defaults to the last). We'll ask GPT to describe an image by creating a user message and attaching an image from Wikimedia Commons:
+OpenAI's latest models, such as `gpt-4o`, support images alongside text content. Images can be attached to messages with the `image` command, which accepts two arguments: the location of the image, either a URL or path to a local file; and the index of the message to which the image should be attached (if unspecified, it defaults to the last). We'll ask GPT to describe an image by creating a user message and attaching an image from Wikimedia Commons:
 
 ```
 (gpt-4o) user What's in this image?
