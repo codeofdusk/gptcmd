@@ -26,7 +26,16 @@ from ..message import Audio, Image, Message, MessageRole
 import openai
 
 ModelCostInfo = namedtuple(
-    "ModelCostInfo", ("prompt_scale", "sampled_scale", "cache_discount_factor")
+    "ModelCostInfo",
+    (
+        "prompt_scale",
+        "sampled_scale",
+        "cache_discount_factor",
+        "long_prompt_threshold",
+        "long_prompt_factor",
+        "long_sampled_factor",
+    ),
+    defaults=(None, Decimal("1"), Decimal("1")),
 )
 
 OPENAI_COSTS: Dict[str, ModelCostInfo] = {
@@ -34,11 +43,17 @@ OPENAI_COSTS: Dict[str, ModelCostInfo] = {
         Decimal("5") / Decimal("1000000"),
         Decimal("30") / Decimal("1000000"),
         Decimal("0.1"),
+        272000,
+        Decimal("2"),
+        Decimal("1.5"),
     ),
     "gpt-5.4-2026-03-05": ModelCostInfo(
         Decimal("2.5") / Decimal("1000000"),
         Decimal("15") / Decimal("1000000"),
         Decimal("0.1"),
+        272000,
+        Decimal("2"),
+        Decimal("1.5"),
     ),
     "gpt-5.2-2025-12-11": ModelCostInfo(
         Decimal("1.75") / Decimal("1000000"),
@@ -290,10 +305,21 @@ class OpenAI(LLMProvider):
         cached_prompt_tokens = min(max(cached_prompt_tokens, 0), prompt_tokens)
         uncached_prompt_tokens = prompt_tokens - cached_prompt_tokens
         sampled_tokens = max(0, sampled_tokens)
+        long_context = (
+            info.long_prompt_threshold is not None
+            and prompt_tokens > info.long_prompt_threshold
+        )
+        prompt_factor = (
+            info.long_prompt_factor if long_context else Decimal("1")
+        )
+        sampled_factor = (
+            info.long_sampled_factor if long_context else Decimal("1")
+        )
+        cached_prompt_scale *= prompt_factor
         return (
-            Decimal(uncached_prompt_tokens) * info.prompt_scale
+            Decimal(uncached_prompt_tokens) * info.prompt_scale * prompt_factor
             + Decimal(cached_prompt_tokens) * cached_prompt_scale
-            + Decimal(sampled_tokens) * info.sampled_scale
+            + Decimal(sampled_tokens) * info.sampled_scale * sampled_factor
         ) * Decimal("100")
 
     def complete(self, messages: Sequence[Message]) -> LLMResponse:
