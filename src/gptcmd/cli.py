@@ -817,7 +817,7 @@ class Gptcmd(cmd.Cmd):
         """
         Move the message at the beginning of a range to the end of that range.
         In other words, move <i> <j> moves the ith message of a thread to
-        index j.
+        index j, using the same inclusive range syntax as other commands.
         """
         if not arg:
             print("Usage: move <from> <to>")
@@ -832,16 +832,21 @@ class Gptcmd(cmd.Cmd):
         length = len(self._current_thread.messages)
         if i is None:
             i = 0
+        elif i < 0:
+            i += length
+
         if j is None:
             j = length
-        if i < 0:
-            i += length
-        if j < 0:
+        elif j < 0:
             j += length
-        elif j > 0:
-            j -= 1  # Adjust end for 1-based indexing
-        if not (0 <= j <= length):
+        # Range parsing returns an exclusive end; move needs the included end.
+        j -= 1
+
+        if not (0 <= j < length):
             print("Destination out of bounds")
+            return
+        if not (0 <= i < length):
+            print("Message doesn't exist")
             return
         try:
             msg = self._current_thread.move(i, j)
