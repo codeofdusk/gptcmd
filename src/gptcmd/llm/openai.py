@@ -30,6 +30,11 @@ ModelCostInfo = namedtuple(
 )
 
 OPENAI_COSTS: Dict[str, ModelCostInfo] = {
+    "gpt-5.5-2026-04-23": ModelCostInfo(
+        Decimal("5") / Decimal("1000000"),
+        Decimal("30") / Decimal("1000000"),
+        Decimal("0.1"),
+    ),
     "gpt-5.4-2026-03-05": ModelCostInfo(
         Decimal("2.5") / Decimal("1000000"),
         Decimal("15") / Decimal("1000000"),
