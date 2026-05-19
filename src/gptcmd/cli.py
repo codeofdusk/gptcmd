@@ -18,6 +18,7 @@ import json
 import os
 import re
 import shlex
+import signal
 import subprocess
 import sys
 import tempfile
@@ -1792,7 +1793,7 @@ class Gptcmd(cmd.Cmd):
         return can_exit  # Truthy return values cause the cmdloop to stop
 
 
-def _write_crash_dump(shell: Gptcmd, exc: Exception) -> Optional[str]:
+def _write_crash_dump(shell: Gptcmd, exc: BaseException) -> Optional[str]:
     """
     Serialize the current shell into a JSON file and return its absolute
     path.
@@ -1832,6 +1833,169 @@ def _write_crash_dump(shell: Gptcmd, exc: Exception) -> Optional[str]:
         if detached_added:
             shell._detached.dirty = original_dirty
             shell._threads.pop(detached_key, None)
+
+
+def _shell_has_dirty_state(shell: Gptcmd) -> bool:
+    "Return whether the shell has unsaved conversation state."
+    return bool(
+        (shell._detached and shell._detached.dirty)
+        or any(t and t.dirty for t in shell._threads.values())
+    )
+
+
+def _signal_name(signum: int) -> str:
+    try:
+        return signal.Signals(signum).name
+    except ValueError:
+        return f"signal {signum}"
+
+
+class _ShutdownDumpHandler:
+    """
+    Installs best-effort hooks for process shutdown events.
+    """
+
+    _WINDOWS_HANDLED_EVENTS = {
+        2: "CTRL_CLOSE_EVENT",
+        5: "CTRL_LOGOFF_EVENT",
+        6: "CTRL_SHUTDOWN_EVENT",
+    }
+
+    def __init__(self, shell: Gptcmd):
+        self._shell = shell
+        self._previous_signal_handlers: Dict[int, Any] = {}
+        self._windows_handler = None
+        self._windows_kernel32 = None
+        self._dump_lock = threading.RLock()
+        self._dump_attempted = False
+
+    def install(self) -> None:
+        "Install all shutdown hooks supported by the current platform."
+        self._install_signal_handlers()
+        if os.name == "nt":
+            self._install_windows_console_handler()
+
+    def uninstall(self) -> None:
+        "Remove shutdown hooks installed by this object."
+        for signum, previous_handler in self._previous_signal_handlers.items():
+            try:
+                signal.signal(signum, previous_handler)
+            except (OSError, RuntimeError, ValueError) as e:
+                self._warn(
+                    "Could not restore the previous handler for "
+                    f"{_signal_name(signum)}: {e}"
+                )
+        self._previous_signal_handlers.clear()
+        if self._windows_handler is None:
+            return
+        try:
+            res = self._windows_kernel32.SetConsoleCtrlHandler(
+                self._windows_handler,
+                False,
+            )
+        except OSError as e:
+            self._warn(
+                f"Could not remove the Windows console shutdown handler: {e}"
+            )
+            return
+        if not res:
+            self._warn("Could not remove the Windows console shutdown handler")
+        self._windows_handler = None
+        self._windows_kernel32 = None
+
+    def _install_signal_handlers(self) -> None:
+        signal_names = ["SIGTERM"]
+        if os.name == "nt":
+            signal_names.append("SIGBREAK")
+        else:
+            signal_names.extend(["SIGHUP", "SIGQUIT"])
+
+        for signal_name in signal_names:
+            signum = getattr(signal, signal_name, None)
+            if signum is None:
+                continue
+            if signum in self._previous_signal_handlers:
+                continue
+            try:
+                previous_handler = signal.getsignal(signum)
+                signal.signal(signum, self._handle_signal)
+            except (OSError, RuntimeError, ValueError) as e:
+                self._warn(
+                    "Could not install a shutdown handler for "
+                    f"{signal_name}: {e}"
+                )
+                continue
+            self._previous_signal_handlers[signum] = previous_handler
+
+    def _install_windows_console_handler(self) -> None:
+        try:
+            import ctypes
+            from ctypes import wintypes
+
+            handler_type = ctypes.WINFUNCTYPE(wintypes.BOOL, wintypes.DWORD)
+            kernel32 = ctypes.windll.kernel32
+        except (AttributeError, OSError) as e:
+            self._warn(f"Could not load Windows console shutdown support: {e}")
+            return
+
+        def _handler(ctrl_type: int) -> bool:
+            event = self._WINDOWS_HANDLED_EVENTS.get(ctrl_type)
+            if event is None:
+                return False
+            self._dump_once(event)
+            return True
+
+        console_handler = handler_type(_handler)
+        try:
+            res = kernel32.SetConsoleCtrlHandler(console_handler, True)
+        except OSError as e:
+            self._warn(
+                f"Could not install the Windows console shutdown handler: {e}"
+            )
+            return
+        if not res:
+            self._warn(
+                "Could not install the Windows console shutdown handler"
+            )
+            return
+        self._windows_handler = console_handler
+        self._windows_kernel32 = kernel32
+
+    def _handle_signal(self, signum: int, frame: Any) -> None:
+        del frame
+        self._dump_once(_signal_name(signum))
+        raise SystemExit(128 + signum)
+
+    def _dump_once(self, event: str) -> Optional[str]:
+        with self._dump_lock:
+            if self._dump_attempted:
+                return None
+            self._dump_attempted = True
+
+        if not _shell_has_dirty_state(self._shell):
+            return None
+
+        dump_path = _write_crash_dump(
+            self._shell,
+            RuntimeError(f"Process is shutting down: {event}"),
+        )
+        if dump_path:
+            print(
+                f"Crash dump written to {dump_path}",
+                file=sys.stderr,
+                flush=True,
+            )
+        return dump_path
+
+    @staticmethod
+    def _warn(message: str) -> None:
+        warnings.warn(
+            message
+            + "\nGptcmd may be unable to save a crash dump in the event of "
+            + "unexpected shutdown!",
+            RuntimeWarning,
+            stacklevel=3,
+        )
 
 
 class ExperimentalAPIWarning(Warning):
@@ -1897,17 +2061,15 @@ def _run(shell_cls) -> bool:
         shell.do_account(args.account, _print_on_success=False)
     if args.model:
         shell.do_model(args.model, _print_on_success=False)
+    shutdown_dump_handler = _ShutdownDumpHandler(shell)
+    shutdown_dump_handler.install()
     try:
         shell.cmdloop()
     except SystemExit:
         # Don't write a crash dump
         raise
     except BaseException as e:
-        # Does any thread contain messages?
-        should_save = (shell._detached and shell._detached.dirty) or any(
-            t and t.dirty for t in shell._threads.values()
-        )
-        if should_save:
+        if _shell_has_dirty_state(shell):
             dump_path = _write_crash_dump(shell, e)
             if dump_path:
                 # Hack: Print the "crash dump" notice after the traceback
@@ -1919,6 +2081,8 @@ def _run(shell_cls) -> bool:
                     )
                 )
         raise
+    finally:
+        shutdown_dump_handler.uninstall()
     return True
 
 
