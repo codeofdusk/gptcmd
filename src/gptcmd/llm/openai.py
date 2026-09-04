@@ -39,9 +39,17 @@ ModelCostInfo = namedtuple(
 )
 
 OPENAI_COSTS: Dict[str, ModelCostInfo] = {
+    "gpt-6-astra": ModelCostInfo(
+        Decimal("10") / Decimal("1000000"),
+        Decimal("50") / Decimal("1000000"),
+        Decimal("0.1"),
+        272000,
+        Decimal("2"),
+        Decimal("1.5"),
+    ),
     "gpt-5.6-sol": ModelCostInfo(
-        Decimal("5") / Decimal("1000000"),
-        Decimal("30") / Decimal("1000000"),
+        Decimal("4") / Decimal("1000000"),
+        Decimal("20") / Decimal("1000000"),
         Decimal("0.1"),
         272000,
         Decimal("2"),
@@ -114,8 +122,8 @@ OPENAI_COSTS: Dict[str, ModelCostInfo] = {
         Decimal("0.5"),
     ),
     "gpt-5.6-terra": ModelCostInfo(
-        Decimal("2.5") / Decimal("1000000"),
-        Decimal("15") / Decimal("1000000"),
+        Decimal("2") / Decimal("1000000"),
+        Decimal("12") / Decimal("1000000"),
         Decimal("0.1"),
         272000,
         Decimal("2"),
@@ -127,8 +135,8 @@ OPENAI_COSTS: Dict[str, ModelCostInfo] = {
         Decimal("0.1"),
     ),
     "gpt-5.6-luna": ModelCostInfo(
-        Decimal("1") / Decimal("1000000"),
-        Decimal("6") / Decimal("1000000"),
+        Decimal("0.2") / Decimal("1000000"),
+        Decimal("1.2") / Decimal("1000000"),
         Decimal("0.1"),
         272000,
         Decimal("2"),
