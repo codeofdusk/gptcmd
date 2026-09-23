@@ -47,6 +47,14 @@ OPENAI_COSTS: Dict[str, ModelCostInfo] = {
         Decimal("2"),
         Decimal("1.5"),
     ),
+    "gpt-6-sol": ModelCostInfo(
+        Decimal("2") / Decimal("1000000"),
+        Decimal("10") / Decimal("1000000"),
+        Decimal("0.1"),
+        272000,
+        Decimal("2"),
+        Decimal("1.5"),
+    ),
     "gpt-5.6-sol": ModelCostInfo(
         Decimal("4") / Decimal("1000000"),
         Decimal("20") / Decimal("1000000"),
@@ -133,6 +141,14 @@ OPENAI_COSTS: Dict[str, ModelCostInfo] = {
         Decimal("0.25") / Decimal("1000000"),
         Decimal("2") / Decimal("1000000"),
         Decimal("0.1"),
+    ),
+    "gpt-6-luna": ModelCostInfo(
+        Decimal("0.1") / Decimal("1000000"),
+        Decimal("0.5") / Decimal("1000000"),
+        Decimal("0.1"),
+        272000,
+        Decimal("2"),
+        Decimal("1.5"),
     ),
     "gpt-5.6-luna": ModelCostInfo(
         Decimal("0.2") / Decimal("1000000"),
@@ -439,6 +455,7 @@ class OpenAI(LLMProvider):
 
     def get_best_model(self):
         BEST_MODELS = (
+            "gpt-6-sol",
             "gpt-5.6-sol",
             "gpt-5.6-terra",
             "gpt-5.5",
