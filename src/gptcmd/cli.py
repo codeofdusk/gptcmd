@@ -1272,24 +1272,49 @@ class Gptcmd(cmd.Cmd):
             path = self.last_path
         else:
             path = args[0]
-        res = {}
-        if _extra_metadata is None:
-            res["_meta"] = {}
-        else:
-            res["_meta"] = _extra_metadata.copy()
-        res["_meta"]["version"] = __version__
-        res["threads"] = {k: v.to_dict() for k, v in self._threads.items()}
         try:
-            with open(path, "w", encoding="utf-8") as cam:
-                json.dump(res, cam, indent=2)
+            self._save_threads(path, _extra_metadata)
         except (OSError, UnicodeEncodeError) as e:
             print(str(e))
             return
-        for thread in self._threads.values():
-            thread.dirty = False
         if _print_on_success:
             print(f"{os.path.abspath(path)} saved")
+
+    def _save_threads(
+        self,
+        path: str,
+        extra_metadata: Optional[Dict[str, Any]],
+        *,
+        overwrite: bool = True,
+    ) -> str:
+        """Save all named threads and return the path used."""
+        res = {}
+        if extra_metadata is None:
+            res["_meta"] = {}
+        else:
+            res["_meta"] = extra_metadata.copy()
+        res["_meta"]["version"] = __version__
+        res["threads"] = {k: v.to_dict() for k, v in self._threads.items()}
+        mode = "w" if overwrite else "x"
+        stem, extension = os.path.splitext(path)
+        i = 2
+        # Claim crash dump names atomically across processes.
+        while True:
+            try:
+                cam = open(path, mode, encoding="utf-8")
+            except FileExistsError:
+                if overwrite:
+                    raise
+                path = f"{stem}_{i}{extension}"
+                i += 1
+            else:
+                break
+        with cam:
+            json.dump(res, cam, indent=2)
+        for thread in self._threads.values():
+            thread.dirty = False
         self.last_path = path
+        return path
 
     def do_load(self, arg, _print_on_success=True):
         "Load all threads from the specified json file."
@@ -1825,12 +1850,12 @@ def _write_crash_dump(shell: Gptcmd, exc: BaseException) -> Optional[str]:
             shell._detached.dirty = False
             shell._threads[detached_key] = shell._detached
             detached_added = True
-        shell.do_save(
+        path = shell._save_threads(
             filename,
-            _extra_metadata={"crash_traceback": tb_text},
-            _print_on_success=False,
+            {"crash_traceback": tb_text},
+            overwrite=False,
         )
-        return os.path.abspath(filename)
+        return os.path.abspath(path)
     except Exception as e:
         print(f"Failed to write crash dump: {e}", file=sys.stderr)
         return None
