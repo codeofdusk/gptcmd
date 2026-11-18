@@ -39,10 +39,26 @@ ModelCostInfo = namedtuple(
 )
 
 OPENAI_COSTS: Dict[str, ModelCostInfo] = {
+    "gpt-6.2-astra": ModelCostInfo(
+        Decimal("8") / Decimal("1000000"),
+        Decimal("40") / Decimal("1000000"),
+        Decimal("0.05"),
+        272000,
+        Decimal("2"),
+        Decimal("1.5"),
+    ),
     "gpt-6-astra": ModelCostInfo(
         Decimal("10") / Decimal("1000000"),
         Decimal("50") / Decimal("1000000"),
         Decimal("0.1"),
+        272000,
+        Decimal("2"),
+        Decimal("1.5"),
+    ),
+    "gpt-6.2-sol": ModelCostInfo(
+        Decimal("2") / Decimal("1000000"),
+        Decimal("10") / Decimal("1000000"),
+        Decimal("0.05"),
         272000,
         Decimal("2"),
         Decimal("1.5"),
@@ -463,6 +479,7 @@ class OpenAI(LLMProvider):
 
     def get_best_model(self):
         BEST_MODELS = (
+            "gpt-6.2-sol",
             "gpt-6.1-sol",
             "gpt-6-sol",
             "gpt-5.6-sol",
